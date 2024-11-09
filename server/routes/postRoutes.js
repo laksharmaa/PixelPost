@@ -1,13 +1,14 @@
 import express from 'express';
 import * as dotenv from 'dotenv';
-import Post from '../mongodb/models/post.js'; // Update as needed
-import { uploadImage } from '../services/azureBlobService.js'; // Update as needed
+import Post from '../mongodb/models/post.js';
+import Comment from '../mongodb/models/comment.js';
+import { uploadImage } from '../services/azureBlobService.js';
 
 dotenv.config();
 const router = express.Router();
 
 // GET ALL POSTS
-router.route('/').get(async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const posts = await Post.find({});
     res.status(200).json({ success: true, data: posts });
@@ -17,16 +18,84 @@ router.route('/').get(async (req, res) => {
   }
 });
 
-// CREATE A POST
-router.route('/').post(async (req, res) => {
+// GET A SPECIFIC POST BY ID
+router.get('/:id', async (req, res) => {
   try {
-    const { name, prompt, photo } = req.body;
-    const photoUrl = await uploadImage(photo, `post-${Date.now()}.jpeg`); // Upload image to Blob storage
+    const post = await Post.findById(req.params.id).populate('comments');
+    if (post) {
+      res.status(200).json({ success: true, data: post });
+    } else {
+      res.status(404).json({ success: false, message: 'Post not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    res.status(500).json({ success: false, message: 'Error fetching post' });
+  }
+});
+
+// GET ALL POSTS FOR A SPECIFIC USER
+router.get('/user-posts/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const userPosts = await Post.find({ userId });
+    res.status(200).json({ success: true, data: userPosts });
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    res.status(500).json({ success: false, message: 'Error fetching user posts' });
+  }
+});
+
+// LIKE A POST
+router.post('/:id/like', async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await Post.findByIdAndUpdate(
+      postId,
+      { $inc: { likes: 1 } },
+      { new: true }
+    );
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+    res.status(200).json({ success: true, data: post });
+  } catch (error) {
+    console.error('Error liking post:', error);
+    res.status(500).json({ success: false, message: 'Error liking post' });
+  }
+});
+
+// ADD A COMMENT TO A POST
+router.post('/:id/comment', async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const { userId, comment } = req.body;
+
+    const newComment = await Comment.create({ postId, userId, comment });
+
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      { $push: { comments: newComment._id }, $inc: { commentCount: 1 } },
+      { new: true }
+    );
+
+    res.status(201).json({ success: true, data: newComment });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ success: false, message: 'Error adding comment' });
+  }
+});
+
+// CREATE A POST
+router.post('/', async (req, res) => {
+  try {
+    const { name, prompt, photo, userId } = req.body;
+    const photoUrl = await uploadImage(photo, `post-${Date.now()}.jpeg`);
 
     const newPost = await Post.create({
       name,
       prompt,
       photo: photoUrl,
+      userId,
     });
 
     res.status(201).json({ success: true, data: newPost });

@@ -11,7 +11,7 @@ const router = express.Router();
 router.route('/').post(async (req, res) => {
   try {
     const { name, prompt, photo } = req.body;
-    const userId = req.auth.sub // Auth0 user ID
+    const userId = req.auth.sub; // Auth0 user ID
 
     const photoUrl = await uploadImage(photo, `userpost-${Date.now()}.jpeg`);
 
@@ -36,7 +36,7 @@ router.route('/').post(async (req, res) => {
 });
 
 // GET ALL POSTS FOR A SPECIFIC USER
-router.route('/').get(async (req, res) => {
+router.route('/user-posts').get(async (req, res) => { // Changed route to /user-posts
   try {
     const userId = req.auth && req.auth.sub; // Extract user ID from token
 
