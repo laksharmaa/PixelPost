@@ -21,7 +21,12 @@ router.get('/', async (req, res) => {
 // GET A SPECIFIC POST BY ID
 router.get('/:id', async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate('comments');
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate('comments');
+    
     if (post) {
       res.status(200).json({ success: true, data: post });
     } else {
@@ -32,6 +37,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error fetching post' });
   }
 });
+
 
 // GET ALL POSTS FOR A SPECIFIC USER
 router.get('/user-posts/:userId', async (req, res) => {
