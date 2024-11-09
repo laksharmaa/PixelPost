@@ -17,6 +17,7 @@ const CreatePost = () => {
 
   const [generatingImg, setGeneratingImg] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,6 +46,8 @@ const CreatePost = () => {
             console.error("Unexpected response:", data);
             alert("Failed to generate image. Please try again.");
           }
+        } else if (response.status === 403) {
+          setLimitReached(true);
         } else {
           const errorData = await response.json();
           console.error("Error response from server:", errorData);
@@ -61,6 +64,7 @@ const CreatePost = () => {
     }
   };
 
+  // Define handleSubmit here
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.prompt && form.photo) {
@@ -108,6 +112,16 @@ const CreatePost = () => {
           Create imaginative and visually stunning images generated through AI and share them with the community.
         </p>
       </div>
+
+      {limitReached && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center">
+          <div className="bg-white text-black p-6 rounded-lg shadow-lg max-w-sm text-center">
+            <p className="text-lg font-semibold mb-4">Limit Reached</p>
+            <p className="mb-4">You have reached the maximum of 2 image generations. This feature will be available in future updates.</p>
+            <button onClick={() => setLimitReached(false)} className="bg-blue-500 text-white px-4 py-2 rounded">Close</button>
+          </div>
+        </div>
+      )}
 
       <form className="mt-16 max-w-3xl" onSubmit={handleSubmit}>
         <div className='flex flex-col gap-5'>
