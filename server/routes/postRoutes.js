@@ -70,8 +70,10 @@ router.post('/:id/comment', async (req, res) => {
     const postId = req.params.id;
     const { userId, comment } = req.body;
 
+    // Create new comment
     const newComment = await Comment.create({ postId, userId, comment });
 
+    // Update post with new comment and increment commentCount
     const updatedPost = await Post.findByIdAndUpdate(
       postId,
       { $push: { comments: newComment._id }, $inc: { commentCount: 1 } },
@@ -84,6 +86,7 @@ router.post('/:id/comment', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error adding comment' });
   }
 });
+
 
 // CREATE A POST
 router.post('/', async (req, res) => {

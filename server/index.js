@@ -12,23 +12,8 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-  'https://pixelpost-opal.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-
-app.use(cors(corsOptions));
+// Allow requests from any origin
+app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // Auth0 middleware to protect routes
@@ -47,7 +32,7 @@ const checkJwt = expressjwt({
 
 // Apply route middleware
 app.use('/api/v1/post', postRoutes);
-app.use('/api/v1/user-post', checkJwt, userPostRoutes); // Ensure path and checkJwt middleware are correct
+app.use('/api/v1/user-post', checkJwt, userPostRoutes);
 app.use('/api/v1/dalle', checkJwt, dalleRoutes);
 
 // Error handling for JWT validation
