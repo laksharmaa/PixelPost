@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { Home, CreatePost, Profile } from './Pages';
+import { Home, CreatePost, Profile, PostDetail } from './Pages';
 import PrivateRoute from './Pages/PrivateRoute';
 import Header from './components/Header'; // Import the Header component
 
@@ -21,6 +21,7 @@ function App() {
               <Profile />
             </PrivateRoute>
           } />
+          <Route path="/post/:id" element={<PostDetail />} /> {/* Add this route */}
         </Routes>
       </main>
     </>

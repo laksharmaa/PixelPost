@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import Loader from '../components/Loader'; // Import loader
-import Card from '../components/Card'; // Import card
+import Loader from '../components/Loader';
+import Card from '../components/Card';
 
 const Profile = () => {
-  const { getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuth0();
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchUserPosts = async () => {
+    if (!user) return;
+
     setLoading(true);
     try {
-      const token = await getAccessTokenSilently();  // Get JWT token
-      console.log('Access Token:', token);  // Log the token for debugging
-
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/user-post`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,  // Pass the token in the Authorization header
-        },
-      });
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post/user-posts/${user.sub}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -37,7 +40,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserPosts();
-  }, []);
+  }, [user]);
 
   return (
     <section className='max-w-7xl mx-auto bg-gray-900 text-white min-h-screen p-8'>
