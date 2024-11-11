@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import Loader from '../components/Loader';
 import Card from '../components/Card';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();
@@ -15,7 +16,7 @@ const Profile = () => {
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/post/user-posts/${user.sub}`,
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user-post/user-posts/${encodeURIComponent(user.sub)}`, // Updated to match /user-post
         {
           method: 'GET',
           headers: {
@@ -51,7 +52,11 @@ const Profile = () => {
       ) : (
         <div className='grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3'>
           {userPosts.length ? (
-            userPosts.map((post) => <Card key={post._id} {...post} />)
+            userPosts.map((post) => (
+              <Link key={post._id} to={`/post/${post._id}`}>
+                <Card {...post} />
+              </Link>
+            ))
           ) : (
             <h2 className='text-white'>No posts found.</h2>
           )}

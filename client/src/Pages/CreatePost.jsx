@@ -6,7 +6,7 @@ import { getRandomPrompt } from '../utils';
 import { FormField, Loader } from '../components';
 
 const CreatePost = () => {
-  const { getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -32,32 +32,25 @@ const CreatePost = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ prompt: form.prompt }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          if (data.photo) {
-            setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo.trim()}` });
-          } else {
-            console.error("Unexpected response:", data);
-            alert("Failed to generate image. Please try again.");
-          }
+          setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo.trim()}` });
         } else {
           const errorData = await response.json();
-          console.error("Error response from server:", errorData);
           alert(`Error: ${errorData.message || 'Failed to generate image'}`);
         }
       } catch (error) {
-        console.error('Error generating image:', error);
         alert(`Error generating image: ${error.message}`);
       } finally {
         setGeneratingImg(false);
       }
     } else {
-      alert("Please enter a prompt");
+      alert('Please enter a prompt');
     }
   };
 
@@ -67,31 +60,29 @@ const CreatePost = () => {
       setLoading(true);
       try {
         const token = await getAccessTokenSilently();
-        const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/user-post`, {
+        
+        const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post`, {
           method: 'POST',
           headers: {
-            'Content-type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, userId: user.sub }),
         });
 
         if (response.ok) {
-          console.log("Post shared successfully!");
           navigate('/');
         } else {
           const errorData = await response.json();
-          console.error("Error Response:", errorData);
-          alert("Error sharing post: " + errorData.message);
+          alert(`Error sharing post: ${errorData.message}`);
         }
       } catch (err) {
-        console.error("Error sharing post:", err);
-        alert("Error sharing post: " + err.message);
+        alert(`Error sharing post: ${err.message}`);
       } finally {
         setLoading(false);
       }
     } else {
-      alert("Please enter a prompt and generate an image");
+      alert('Please enter a prompt and generate an image');
     }
   };
 
