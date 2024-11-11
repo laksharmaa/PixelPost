@@ -4,7 +4,7 @@ import cors from 'cors';
 import connectDB from './mongodb/connect.js';
 import postRoutes from './routes/postRoutes.js';
 import dalleRoutes from './routes/dalleRoutes.js';
-import userPostRoutes from './routes/userPost.js'; // renamed variable for clarity
+import userPostRoutes from './routes/userPost.js';
 import { expressjwt } from 'express-jwt';
 import jwks from 'jwks-rsa';
 
@@ -12,11 +12,26 @@ dotenv.config();
 
 const app = express();
 
-// Allow requests from any origin
-app.use(cors());
+const allowedOrigins = [
+  'https://pixelpost-opal.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 
-// Auth0 middleware to protect routes
+// Auth0 middleware for protected routes
 const checkJwt = expressjwt({
   secret: jwks.expressJwtSecret({
     cache: true,
@@ -30,8 +45,10 @@ const checkJwt = expressjwt({
   requestProperty: 'auth', 
 });
 
-// Apply route middleware
+// Public route (e.g., fetching posts)
 app.use('/api/v1/post', postRoutes);
+
+// Protected routes for actions requiring authentication
 app.use('/api/v1/user-post', checkJwt, userPostRoutes);
 app.use('/api/v1/dalle', checkJwt, dalleRoutes);
 
