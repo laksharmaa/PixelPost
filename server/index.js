@@ -12,23 +12,8 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-  'https://pixelpost-opal.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
+app.use(cors());
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-
-app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 
 // Auth0 middleware for protected routes
