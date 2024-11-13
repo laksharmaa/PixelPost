@@ -7,16 +7,15 @@ import { Link } from 'react-router-dom';
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const [userPosts, setUserPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchUserPosts = async () => {
-    if (!user) return;
-
-    setLoading(true);
     try {
+      if (!user) return;
+
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user-post/user-posts/${encodeURIComponent(user.sub)}`, // Updated to match /user-post
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user-post/user-posts/${encodeURIComponent(user.sub)}`,
         {
           method: 'GET',
           headers: {
@@ -28,9 +27,18 @@ const Profile = () => {
 
       if (response.ok) {
         const result = await response.json();
-        setUserPosts(result.data);
+
+        // Filter unique posts based on `_id`
+        const uniquePosts = result.data.reduce((acc, post) => {
+          if (!acc.some((p) => p._id === post._id)) {
+            acc.push(post);
+          }
+          return acc;
+        }, []);
+
+        setUserPosts(uniquePosts);
       } else {
-        console.error('Error:', response.statusText);
+        console.error('Error fetching user posts:', response.statusText);
       }
     } catch (error) {
       console.error('Error fetching user posts:', error);

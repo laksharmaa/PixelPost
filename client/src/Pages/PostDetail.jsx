@@ -9,7 +9,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 
 const PostDetail = () => {
   const { id } = useParams();
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently, user } = useAuth0();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
@@ -34,13 +34,11 @@ const PostDetail = () => {
         setPost(result.data);
         setLikeCount(result.data.likes);
 
-        if (isAuthenticated) {
-          // Check if the user has already liked the post
-          const userInfo = await fetch(`https://${import.meta.env.VITE_AUTH0_DOMAIN}/userinfo`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const { sub: userId } = await userInfo.json();
-          setHasLiked(result.data.likedBy.includes(userId));
+        // Increment the view count when the post is loaded
+        updateViewCount(result.data.views + 1);
+
+        if (isAuthenticated && user) {
+          setHasLiked(result.data.likedBy.includes(user.sub));
         }
       } else {
         console.error("Post not found.");
@@ -52,24 +50,40 @@ const PostDetail = () => {
     }
   };
 
+  const updateViewCount = async (newViewCount) => {
+    try {
+      await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/view`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ views: newViewCount }),
+      });
+      setPost((prev) => ({ ...prev, views: newViewCount }));
+    } catch (error) {
+      console.error("Error updating view count:", error);
+    }
+  };
+
   const handleLike = async () => {
     if (!isAuthenticated) {
       alert("Please log in to like this post.");
       return;
     }
+
     try {
       const token = await getAccessTokenSilently();
+      const userId = user?.sub;
+
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${hasLiked ? 'unlike' : 'like'}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId: post.userId }),
+        body: JSON.stringify({ userId }),
       });
 
       if (response.ok) {
-        setLikeCount(prev => hasLiked ? prev - 1 : prev + 1);
+        setLikeCount((prev) => hasLiked ? prev - 1 : prev + 1);
         setHasLiked(!hasLiked);
       } else {
         console.error("Error toggling like status");
@@ -85,25 +99,36 @@ const PostDetail = () => {
       alert("Please log in to comment.");
       return;
     }
-
-    if (!newComment) return;
-
+  
+    if (!newComment.trim()) return;
+  
     try {
       const token = await getAccessTokenSilently();
+      const userId = user?.sub;
+  
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/comment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ comment: newComment, userId: post.userId }),
+        body: JSON.stringify({ comment: newComment, userId }),
       });
-
+  
       if (response.ok) {
         const newCommentData = await response.json();
-        setPost(prev => ({
+  
+        // Add new comment directly to the post's comments in the UI
+        setPost((prev) => ({
           ...prev,
-          comments: [...prev.comments, newCommentData],
+          comments: [
+            ...prev.comments,
+            {
+              ...newCommentData.data, // use newCommentData.data to access the new comment details
+              createdAt: new Date().toISOString(),
+            },
+          ],
+          commentCount: prev.commentCount + 1,
         }));
         setNewComment('');
       } else {
@@ -112,7 +137,7 @@ const PostDetail = () => {
     } catch (error) {
       console.error('Error adding comment:', error);
     }
-  };
+  };  
 
   useEffect(() => {
     fetchPost();
