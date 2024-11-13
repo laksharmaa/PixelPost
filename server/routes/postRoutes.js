@@ -68,8 +68,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-
-
 // LIKE A POST
 router.post('/:id/like', async (req, res) => {
   try {
@@ -98,7 +96,6 @@ router.post('/:id/like', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error liking post' });
   }
 });
-
 
 // UNLIKE A POST
 router.post('/:id/unlike', async (req, res) => {

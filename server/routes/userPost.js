@@ -25,21 +25,27 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET ALL POSTS FOR A SPECIFIC USER
+// routes/userPost.js
 router.get('/user-posts/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const userPosts = await UserPost.find({ userId });
-    if (userPosts.length === 0) {
+
+    // Aggregate posts and ensure uniqueness by grouping by _id
+    const userPosts = await UserPost.aggregate([
+      { $match: { userId } },
+      { $group: { _id: "$_id", post: { $first: "$$ROOT" } } },
+      { $replaceRoot: { newRoot: "$post" } } // Replace root to get the actual document structure
+    ]);
+
+    if (!userPosts.length) {
       return res.status(404).json({ success: false, message: 'No posts found for this user' });
     }
+
     res.status(200).json({ success: true, data: userPosts });
   } catch (error) {
     console.error('Error fetching user posts:', error);
     res.status(500).json({ success: false, message: 'Error fetching user posts' });
   }
 });
-
-
 
 export default router;
