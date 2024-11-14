@@ -136,4 +136,24 @@ router.post('/:id/comment', async (req, res) => {
   }
 });
 
+// Backend route to handle view increment
+router.post('/:id/view', async (req, res) => {
+  try {
+    const { views } = req.body;
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $set: { views } },
+      { new: true }
+    );
+
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    res.status(200).json({ success: true, data: post });
+  } catch (error) {
+    console.error('Error updating view count:', error);
+    res.status(500).json({ success: false, message: 'Error updating view count' });
+  }
+});
+
+
+
 export default router;

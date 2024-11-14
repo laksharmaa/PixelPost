@@ -16,6 +16,7 @@ const PostDetail = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
+  const [viewUpdated, setViewUpdated] = useState(false); // Flag to ensure view count only updates once
 
   const fetchPost = async () => {
     setLoading(true);
@@ -34,8 +35,11 @@ const PostDetail = () => {
         setPost(result.data);
         setLikeCount(result.data.likes);
 
-        // Increment the view count when the post is loaded
-        updateViewCount(result.data.views + 1);
+        // Increment the view count only if it hasn't been updated already
+        if (!viewUpdated) {
+          updateViewCount(result.data.views + 1);
+          setViewUpdated(true); // Set flag to true to prevent further increments
+        }
 
         if (isAuthenticated && user) {
           setHasLiked(result.data.likedBy.includes(user.sub));
@@ -124,7 +128,7 @@ const PostDetail = () => {
           comments: [
             ...prev.comments,
             {
-              ...newCommentData.data, // use newCommentData.data to access the new comment details
+              ...newCommentData.data,
               createdAt: new Date().toISOString(),
             },
           ],
@@ -137,11 +141,11 @@ const PostDetail = () => {
     } catch (error) {
       console.error('Error adding comment:', error);
     }
-  };  
+  };
 
   useEffect(() => {
     fetchPost();
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once
 
   return (
     <section className="max-w-4xl mx-auto bg-gray-900 text-white min-h-screen p-8 rounded-xl">
