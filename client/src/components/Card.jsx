@@ -5,7 +5,8 @@ import { downloadImage } from '../utils';
 
 const Card = ({ _id, name, prompt, photo }) => {
   return (
-    <div className="rounded-xl group relative shadow-card hover:shadow-cardhover card">
+    <div className="rounded-xl group relative shadow-card transition-all duration-300 
+      hover:shadow-lg hover:shadow-violet-400 hover:scale-[1.02] card">
       <Link to={`/post/${_id}`} className="block">
         <img
           className="w-full h-auto object-cover rounded-lg transition-transform duration-300 hover:scale-105"

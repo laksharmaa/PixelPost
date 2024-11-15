@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'; // Import BrowserRouter
 import App from './App.jsx';
 import './index.css';
 import { Auth0Provider } from '@auth0/auth0-react'; // Import Auth0Provider
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -17,9 +18,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       }}
       cacheLocation="localstorage"
     >
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ThemeProvider>
     </Auth0Provider>
   </React.StrictMode>
 );

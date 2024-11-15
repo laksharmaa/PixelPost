@@ -24,12 +24,20 @@ const FormField = ({ labelName, type, name, placeholder, value, handleChange, is
         type={type}
         id={name}
         name={name}
-        className='bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-[#4669ff] focus:border-[#4669ff] outline-none block w-full p-3'
+        className="transition-colors duration-300 ease-in-out
+    bg-lightInput dark:bg-darkInput 
+    border border-gray-300 dark:border-gray-700 
+    text-lightText dark:text-darkText 
+    text-sm rounded-lg 
+    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+    outline-none block w-full p-3"
         placeholder={placeholder}
         value={value}
         onChange={handleChange}
         required
       />
+
+
     </div>
   );
 }

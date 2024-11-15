@@ -2,13 +2,16 @@ import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Home, CreatePost, Profile, PostDetail } from './Pages';
 import PrivateRoute from './Pages/PrivateRoute';
-import Header from './components/Header'; // Import the Header component
+import Header from './components/Header';
+import { useTheme } from './context/ThemeContext';
 
 function App() {
+  const { isDarkMode } = useTheme();
+
   return (
-    <>
-      <Header /> {/* Use the Header component here */}
-      <main className='sm:p-8 px-4 py-8 w-full bg-gray-800 text-white min-h-[calc(100vh-73px)]'>
+    <div className={`${isDarkMode ? 'dark' : ''} min-h-screen`}>
+      <Header />
+      <main className="sm:p-8 px-4 py-8 w-full min-h-[calc(100vh-73px)] bg-slate-200 dark:bg-gray-800 text-lightText dark:text-darkText">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/create-post" element={
@@ -21,10 +24,10 @@ function App() {
               <Profile />
             </PrivateRoute>
           } />
-          <Route path="/post/:id" element={<PostDetail />} /> {/* Add this route */}
+          <Route path="/post/:id" element={<PostDetail />} />
         </Routes>
       </main>
-    </>
+    </div>
   );
 }
 

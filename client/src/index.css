@@ -1,29 +1,27 @@
+/* index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Apply default styles */
 body, html {
-    margin: 0;
-    padding: 0;
-    background-color: #000; /* Or whatever your background color/image is */
-  }
-
-* {
-    font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  @apply bg-lightBg text-lightText transition-colors duration-300 ease-in-out;
 }
 
+/* Apply dark mode styles */
+.dark body, .dark html {
+  @apply bg-darkBg text-darkText;
+}
+
+/* Global font */
+* {
+  font-family: 'Inter', sans-serif;
+}
 @media screen and (min-width: 480px) {
     .card:nth-child(7n + 1) {
         grid-column: auto/span 2;
         grid-row: auto/span 2;
     }
 }
-
-/* .prompt::-webkit-scrollbar {
-    width: 5px;
-}
- 
-.prompt::-webkit-scrollbar-thumb {
-  background-color: #666e75;
-  border-radius: 5px;
-} */

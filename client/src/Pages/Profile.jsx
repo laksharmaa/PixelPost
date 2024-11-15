@@ -52,25 +52,50 @@ const Profile = () => {
   }, [user]);
 
   return (
-    <section className='max-w-7xl mx-auto bg-gray-900 text-white min-h-screen p-8'>
-      <h1 className='font-extrabold text-white text-[32px]'>My Profile</h1>
+    <section 
+  className="max-w-7xl mx-auto 
+  bg-lightBg dark:bg-darkBg 
+  text-lightText dark:text-darkText 
+  min-h-screen p-8 
+  rounded-lg shadow-md 
+  transition-colors duration-300 ease-in-out"
+>
+  <h1 
+    className="font-extrabold 
+    text-lightText dark:text-darkText 
+    text-[32px]"
+  >
+    My Profile
+  </h1>
 
-      {loading ? (
-        <Loader />
+  {loading ? (
+    <Loader />
+  ) : (
+    <div 
+      className="grid 
+      lg:grid-cols-4 
+      sm:grid-cols-3 
+      xs:grid-cols-2 
+      grid-cols-1 gap-3"
+    >
+      {userPosts.length ? (
+        userPosts.map((post) => (
+          <Card 
+            key={post._id} 
+            {...post} 
+          />
+        ))
       ) : (
-        <div className='grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3'>
-          {userPosts.length ? (
-            userPosts.map((post) => (
-              <Link key={post._id} to={`/post/${post._id}`}>
-                <Card {...post} />
-              </Link>
-            ))
-          ) : (
-            <h2 className='text-white'>No posts found.</h2>
-          )}
-        </div>
+        <h2 
+          className="text-lightText dark:text-darkText"
+        >
+          No posts found.
+        </h2>
       )}
-    </section>
+    </div>
+  )}
+</section>
+
   );
 };
 

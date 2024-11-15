@@ -16,7 +16,7 @@ const PostDetail = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [hasLiked, setHasLiked] = useState(false);
-  const [viewUpdated, setViewUpdated] = useState(false); // Flag to ensure view count only updates once
+  const [viewUpdated, setViewUpdated] = useState(false);
 
   const fetchPost = async () => {
     setLoading(true);
@@ -35,10 +35,9 @@ const PostDetail = () => {
         setPost(result.data);
         setLikeCount(result.data.likes);
 
-        // Increment the view count only if it hasn't been updated already
         if (!viewUpdated) {
           updateViewCount(result.data.views + 1);
-          setViewUpdated(true); // Set flag to true to prevent further increments
+          setViewUpdated(true);
         }
 
         if (isAuthenticated && user) {
@@ -68,14 +67,14 @@ const PostDetail = () => {
   };
 
   const handleLike = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       alert("Please log in to like this post.");
       return;
     }
 
     try {
       const token = await getAccessTokenSilently();
-      const userId = user?.sub;
+      const userId = user.sub;
 
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${hasLiked ? 'unlike' : 'like'}`, {
         method: 'POST',
@@ -87,7 +86,7 @@ const PostDetail = () => {
       });
 
       if (response.ok) {
-        setLikeCount((prev) => hasLiked ? prev - 1 : prev + 1);
+        setLikeCount((prev) => (hasLiked ? prev - 1 : prev + 1));
         setHasLiked(!hasLiked);
       } else {
         console.error("Error toggling like status");
@@ -122,7 +121,6 @@ const PostDetail = () => {
       if (response.ok) {
         const newCommentData = await response.json();
   
-        // Add new comment directly to the post's comments in the UI
         setPost((prev) => ({
           ...prev,
           comments: [
@@ -145,7 +143,7 @@ const PostDetail = () => {
 
   useEffect(() => {
     fetchPost();
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
 
   return (
     <section className="max-w-4xl mx-auto bg-gray-900 text-white min-h-screen p-8 rounded-xl">
