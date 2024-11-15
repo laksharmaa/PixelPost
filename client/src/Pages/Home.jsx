@@ -67,7 +67,7 @@ const Home = () => {
 
   return (
     <section
-      className="max-w-7xl mx-auto p-8 
+      className="mt-3 max-w-7xl mx-auto p-8 
   bg-lightBg dark:bg-darkBg 
   text-lightText dark:text-darkText 
   rounded-lg shadow-md transition-colors duration-300 ease-in-out"

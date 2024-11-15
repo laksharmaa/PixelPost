@@ -2,7 +2,7 @@ import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Home, CreatePost, Profile, PostDetail } from './Pages';
 import PrivateRoute from './Pages/PrivateRoute';
-import Header from './components/Header';
+import CustomNavbar from "./components/CustomNavbar"; // New Navbar
 import { useTheme } from './context/ThemeContext';
 
 function App() {
@@ -10,7 +10,7 @@ function App() {
 
   return (
     <div className={`${isDarkMode ? 'dark' : ''} min-h-screen`}>
-      <Header />
+      <CustomNavbar />
       <main className="sm:p-8 px-4 py-8 w-full min-h-[calc(100vh-73px)] bg-slate-200 dark:bg-gray-800 text-lightText dark:text-darkText">
         <Routes>
           <Route path="/" element={<Home />} />

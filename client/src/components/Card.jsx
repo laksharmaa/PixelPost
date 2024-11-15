@@ -5,7 +5,7 @@ import { downloadImage } from '../utils';
 
 const Card = ({ _id, name, prompt, photo }) => {
   return (
-    <div className="rounded-xl group relative shadow-card transition-all duration-300 
+    <div className="shadow-lg rounded-xl group relative shadow-card transition-all duration-300 
       hover:shadow-lg hover:shadow-violet-400 hover:scale-[1.02] card">
       <Link to={`/post/${_id}`} className="block">
         <img
@@ -13,7 +13,7 @@ const Card = ({ _id, name, prompt, photo }) => {
           src={photo}
           alt={prompt}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end">
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end rounded-md">
           <p className="text-white text-xs sm:text-sm leading-tight mb-2 truncate">{prompt}</p>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">

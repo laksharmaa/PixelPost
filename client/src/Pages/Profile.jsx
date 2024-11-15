@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import Loader from '../components/Loader';
 import Card from '../components/Card';
-import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();
@@ -53,49 +52,58 @@ const Profile = () => {
 
   return (
     <section 
-  className="max-w-7xl mx-auto 
-  bg-lightBg dark:bg-darkBg 
-  text-lightText dark:text-darkText 
-  min-h-screen p-8 
-  rounded-lg shadow-md 
-  transition-colors duration-300 ease-in-out"
->
-  <h1 
-    className="font-extrabold 
-    text-lightText dark:text-darkText 
-    text-[32px]"
-  >
-    My Profile
-  </h1>
-
-  {loading ? (
-    <Loader />
-  ) : (
-    <div 
-      className="grid 
-      lg:grid-cols-4 
-      sm:grid-cols-3 
-      xs:grid-cols-2 
-      grid-cols-1 gap-3"
+      className="mt-4 max-w-7xl mx-auto 
+      bg-lightBg dark:bg-darkBg 
+      text-lightText dark:text-darkText 
+      min-h-screen p-8 
+      rounded-lg shadow-md 
+      transition-colors duration-300 ease-in-out"
     >
-      {userPosts.length ? (
-        userPosts.map((post) => (
-          <Card 
-            key={post._id} 
-            {...post} 
-          />
-        ))
-      ) : (
-        <h2 
-          className="text-lightText dark:text-darkText"
+      {/* Header Section */}
+      <div className="text-center mb-10">
+        <h1 
+          className="font-extrabold 
+          text-lightText dark:text-darkText 
+          text-4xl mb-4"
         >
-          No posts found.
-        </h2>
-      )}
-    </div>
-  )}
-</section>
+          My Profile
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">
+          Below are your created posts. You can explore and manage them here.
+        </p>
+      </div>
 
+      {/* Posts Section */}
+      {loading ? (
+        <div className="flex justify-center">
+          <Loader />
+        </div>
+      ) : userPosts.length ? (
+        <div 
+          className="grid 
+          lg:grid-cols-4 
+          sm:grid-cols-3 
+          xs:grid-cols-2 
+          grid-cols-1 gap-6"
+        >
+          {userPosts.map((post) => (
+            <div 
+              key={post._id} 
+            >
+              <Card {...post} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center mt-10">
+          <h2 
+            className="text-lightText dark:text-darkText text-xl"
+          >
+            No posts found.
+          </h2>
+        </div>
+      )}
+    </section>
   );
 };
 
