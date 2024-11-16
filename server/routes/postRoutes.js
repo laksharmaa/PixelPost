@@ -154,6 +154,43 @@ router.post('/:id/view', async (req, res) => {
   }
 });
 
+// DELETE A COMMUNITY POST AND CLEAN UP ASSOCIATED DATA
+router.delete('/:id', async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    // Find the post to delete
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
+    const { userId } = post;
+
+    // Delete associated comments
+    await Comment.deleteMany({ postId });
+
+    // Delete from UserPost collection if it exists
+    await UserPost.findByIdAndDelete(postId);
+
+    // Remove the post
+    await Post.findByIdAndDelete(postId);
+
+    // Update the user's postCount, likeCount, and commentCount
+    const user = await User.findOne({ userId });
+    if (user) {
+      user.postCount = Math.max(0, user.postCount - 1);
+      user.likeCount = Math.max(0, user.likeCount - post.likes);
+      user.commentCount = Math.max(0, user.commentCount - post.commentCount);
+      await user.save();
+    }
+
+    res.status(200).json({ success: true, message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ success: false, message: 'Error deleting post' });
+  }
+});
 
 
 export default router;
