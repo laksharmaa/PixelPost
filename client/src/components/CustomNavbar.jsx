@@ -8,8 +8,8 @@ import { useTheme } from "../context/ThemeContext";
 import UserProfileDropdown from "./UserProfileDropdown";
 
 function CustomNavbar() {
-  const { isDarkMode, toggleDarkMode } = useTheme();
-  const { isAuthenticated, loginWithPopup, logout, user } = useAuth0();
+  const { isDarkMode } = useTheme();
+  const { isAuthenticated, loginWithPopup, logout, user, isLoading } = useAuth0();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -62,7 +62,9 @@ function CustomNavbar() {
         {/* Dark Mode Toggle and User Profile */}
         <div className="hidden lg:flex items-center space-x-4">
           <DarkModeToggle />
-          {isAuthenticated ? (
+          {isLoading ? (
+            <div className="text-gray-500">Loading...</div>
+          ) : isAuthenticated ? (
             <UserProfileDropdown
               userName={user?.name}
               userEmail={user?.email}
@@ -88,7 +90,9 @@ function CustomNavbar() {
         {/* Mobile Dark Mode Toggle */}
         <div className="flex items-center space-x-2 lg:hidden">
           <DarkModeToggle />
-          {isAuthenticated && (
+          {isLoading ? (
+            <div className="text-gray-500">Loading...</div>
+          ) : isAuthenticated && (
             <UserProfileDropdown
               userName={user?.name}
               userEmail={user?.email}
