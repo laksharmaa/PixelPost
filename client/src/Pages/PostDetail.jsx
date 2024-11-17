@@ -146,76 +146,92 @@ const PostDetail = () => {
   }, []);
 
   return (
-    <section className="max-w-4xl mx-auto bg-gray-900 text-white min-h-screen p-8 rounded-xl">
-      {loading ? (
-        <Loader />
-      ) : post ? (
-        <>
-          <div className="flex flex-col items-center">
-            <img 
-              src={post.photo} 
-              alt={post.prompt} 
-              className="rounded-lg mb-4 w-full max-w-screen-md object-contain"
-              style={{ maxHeight: '1024px' }}
-            />
-            <h2 className="text-lg font-mono mb-2">{post.prompt}</h2>
-            <p className="text-gray-400 mb-4">Posted by: {post.name}</p>
+    <section 
+  className="max-w-4xl mx-auto min-h-screen p-8 rounded-xl transition-colors duration-300 ease-in-out 
+             bg-white text-gray-900 dark:bg-gray-900 dark:text-white"
+>
+  {loading ? (
+    <Loader />
+  ) : post ? (
+    <>
+      <div className="flex flex-col items-center">
+        <img 
+          src={post.photo} 
+          alt={post.prompt} 
+          className="rounded-lg mb-4 w-full max-w-screen-md object-contain"
+          style={{ maxHeight: '1024px' }}
+        />
+        <h2 className="text-lg font-mono mb-2">{post.prompt}</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">Posted by: {post.name}</p>
 
-            <div className="flex gap-6 mb-6">
-              <button onClick={handleLike} className="text-white flex items-center gap-1">
-                {hasLiked ? (
-                  <FavoriteIcon style={{ color: 'red' }} />
-                ) : (
-                  <FavoriteBorderIcon />
-                )}
-                {likeCount}
-              </button>
+        <div className="flex gap-6 mb-6">
+          <button onClick={handleLike} className="flex items-center gap-1">
+            {hasLiked ? (
+              <FavoriteIcon style={{ color: 'red' }} />
+            ) : (
+              <FavoriteBorderIcon className="text-gray-600 dark:text-white" />
+            )}
+            <span className="text-gray-900 dark:text-white">{likeCount}</span>
+          </button>
 
-              <div className="text-white flex items-center gap-1">
-                <RemoveRedEyeOutlinedIcon />
-                {post.views}
-              </div>
-
-              <button onClick={() => setShowComments(!showComments)} className="text-white flex items-center gap-1">
-                <ChatBubbleOutlineRoundedIcon />
-                {post.commentCount}
-              </button>
-            </div>
+          <div className="flex items-center gap-1">
+            <RemoveRedEyeOutlinedIcon className="text-gray-600 dark:text-white" />
+            <span className="text-gray-900 dark:text-white">{post.views}</span>
           </div>
 
-          <hr className="my-6" />
+          <button 
+            onClick={() => setShowComments(!showComments)} 
+            className="flex items-center gap-1 text-gray-900 dark:text-white"
+          >
+            <ChatBubbleOutlineRoundedIcon />
+            {post.commentCount}
+          </button>
+        </div>
+      </div>
 
-          {showComments && (
-            <div className="comments">
-              <h3 className="text-xl font-bold mb-4">Comments ({post.comments.length})</h3>
-              <ul>
-                {post.comments.map((comment, index) => (
-                  <li key={index} className="mb-2 text-gray-300">
-                    {comment.comment} - <small>{new Date(comment.createdAt).toLocaleDateString()}</small>
-                  </li>
-                ))}
-              </ul>
-              {isAuthenticated && (
-                <form onSubmit={handleCommentSubmit} className="mt-4">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="w-full p-3 text-white bg-gray-800 rounded-md mb-2 resize-none focus:outline-none"
-                    placeholder="Add a comment..."
-                    rows="3"
-                  ></textarea>
-                  <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded-md">
-                    Submit Comment
-                  </button>
-                </form>
-              )}
-            </div>
+      <hr className="my-6 border-gray-300 dark:border-gray-700" />
+
+      {showComments && (
+        <div className="comments">
+          <h3 className="text-xl font-bold mb-4">Comments ({post.comments.length})</h3>
+          <ul>
+            {post.comments.map((comment, index) => (
+              <li 
+                key={index} 
+                className="mb-2 text-gray-800 dark:text-gray-300"
+              >
+                {comment.comment} - 
+                <small className="text-gray-500 dark:text-gray-400 ml-1">
+                  {new Date(comment.createdAt).toLocaleDateString()}
+                </small>
+              </li>
+            ))}
+          </ul>
+          {isAuthenticated && (
+            <form onSubmit={handleCommentSubmit} className="mt-4">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="w-full p-3 text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 rounded-md mb-2 resize-none focus:outline-none"
+                placeholder="Add a comment..."
+                rows="3"
+              ></textarea>
+              <button 
+                type="submit" 
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                Submit Comment
+              </button>
+            </form>
           )}
-        </>
-      ) : (
-        <p>Post not found.</p>
+        </div>
       )}
-    </section>
+    </>
+  ) : (
+    <p className="text-gray-900 dark:text-white">Post not found.</p>
+  )}
+</section>
+
   );
 };
 

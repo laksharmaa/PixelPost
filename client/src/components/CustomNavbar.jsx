@@ -39,7 +39,7 @@ function CustomNavbar() {
       <div className="relative flex items-center justify-between">
         {/* Logo */}
         <Typography as={Link} to="/" className="mr-4 ml-2 flex items-center">
-          <img src={logo} alt="Logo" className="max-h-10 object-contain mr-2 rounded-full" />
+          <img src={logo} alt="Logo" className="max-h-12  mr-2" />
         </Typography>
 
         {/* Desktop Links */}
