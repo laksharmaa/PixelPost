@@ -16,10 +16,10 @@ const Profile = () => {
   const fetchUserPosts = async () => {
     try {
       if (!user) return;
-
+  
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user-post/user-posts/${encodeURIComponent(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post/user/${encodeURIComponent(
           user.sub
         )}`,
         {
@@ -30,7 +30,7 @@ const Profile = () => {
           },
         }
       );
-
+  
       if (response.ok) {
         const result = await response.json();
         setUserPosts(result.data);
@@ -43,15 +43,16 @@ const Profile = () => {
       setLoading(false);
     }
   };
+  
 
   const handleDeletePost = async () => {
     try {
       setIsDeleting(true); // Start deletion process
       if (!selectedPostId) return;
-
+  
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user-post/${selectedPostId}`,
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post/${selectedPostId}`,
         {
           method: "DELETE",
           headers: {
@@ -60,7 +61,7 @@ const Profile = () => {
           },
         }
       );
-
+  
       if (response.ok) {
         setUserPosts((prevPosts) =>
           prevPosts.filter((post) => post._id !== selectedPostId)
@@ -75,6 +76,7 @@ const Profile = () => {
       setIsDeleting(false); // Reset deletion state
     }
   };
+  
 
   const handleOpenModal = (postId) => {
     setSelectedPostId(postId);

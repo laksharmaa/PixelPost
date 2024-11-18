@@ -2,8 +2,10 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 import Post from '../mongodb/models/post.js';
 import Comment from '../mongodb/models/comment.js';
+import User from '../mongodb/models/user.js';
 import loginOrCreateUser from '../utils/loginOrCreateUser.js';
 import { uploadImage } from '../services/azureBlobService.js';
+import { deleteImage } from '../services/azureBlobService.js';
 
 dotenv.config();
 const router = express.Router();
@@ -154,7 +156,7 @@ router.post('/:id/view', async (req, res) => {
   }
 });
 
-// DELETE A COMMUNITY POST AND CLEAN UP ASSOCIATED DATA
+// DELETE A POST AND CLEAN UP ASSOCIATED DATA
 router.delete('/:id', async (req, res) => {
   try {
     const postId = req.params.id;
@@ -165,13 +167,18 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Post not found' });
     }
 
-    const { userId } = post;
+    const { userId, photo } = post; // Get userId and photo URL
+
+    // Delete the image from Azure Blob Storage
+    try {
+      await deleteImage(photo);
+    } catch (blobError) {
+      console.error("Failed to delete image from Azure Blob Storage:", blobError.message);
+      // Continue with post deletion even if image deletion fails
+    }
 
     // Delete associated comments
     await Comment.deleteMany({ postId });
-
-    // Delete from UserPost collection if it exists
-    await UserPost.findByIdAndDelete(postId);
 
     // Remove the post
     await Post.findByIdAndDelete(postId);
@@ -185,12 +192,13 @@ router.delete('/:id', async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({ success: true, message: 'Post deleted successfully' });
+    res.status(200).json({ success: true, message: 'Post and associated image deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
     res.status(500).json({ success: false, message: 'Error deleting post' });
   }
 });
+
 
 
 export default router;

@@ -26,3 +26,17 @@ export const uploadImage = async (imageData, imageName) => {
   }
 };
 
+// Add a function to delete an image from Azure Blob Storage
+export const deleteImage = async (imageUrl) => {
+  try {
+    const blobName = imageUrl.split("/").pop(); // Extract the blob name from the URL
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    // Delete the blob
+    await blockBlobClient.delete();
+    console.log("Image deleted from Azure Blob Storage:", imageUrl);
+  } catch (error) {
+    console.error("Error deleting image:", error.message);
+    throw new Error("Failed to delete image from Azure Blob Storage");
+  }
+};

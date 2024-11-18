@@ -4,7 +4,7 @@ import cors from 'cors';
 import connectDB from './mongodb/connect.js';
 import postRoutes from './routes/postRoutes.js';
 import dalleRoutes from './routes/dalleRoutes.js';
-import userPostRoutes from './routes/userPost.js';
+// import userPostRoutes from './routes/userPost.js';
 import { expressjwt } from 'express-jwt';
 import jwks from 'jwks-rsa';
 
@@ -34,7 +34,7 @@ const checkJwt = expressjwt({
 app.use('/api/v1/post', postRoutes);
 
 // Protected routes for actions requiring authentication
-app.use('/api/v1/user-post', checkJwt, userPostRoutes);
+// app.use('/api/v1/user-post', checkJwt, userPostRoutes);
 app.use('/api/v1/dalle', checkJwt, dalleRoutes);
 
 // Error handling for JWT validation
