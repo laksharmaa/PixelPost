@@ -1,13 +1,3 @@
-// import mongoose from 'mongoose';
-
-// const connectDB = (url) => {
-//   mongoose.set('strictQuery', true);
-//   mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
-//     .then(() => console.log('CosmosDB Connected'))
-//     .catch((err) => console.log(err));
-// };
-
-// export default connectDB;
 import mongoose from 'mongoose';
 
 const connectDB = async (url) => {

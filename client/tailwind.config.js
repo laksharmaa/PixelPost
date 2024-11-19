@@ -15,7 +15,17 @@ export default {
         lightInput: '#f3f4f6', // Light mode input
         darkInput: '#1f2937', // Dark mode input
       },
+      keyframes: {
+        shimmer: {
+          from: { backgroundPosition: '200% 0' },
+          to: { backgroundPosition: '-200% 0' },
+        },
+      },
+      animation: {
+        pulse: 'shimmer 1.5s infinite',
+      },   
     },
+    
   },
   plugins: [],
 }

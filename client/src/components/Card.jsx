@@ -7,6 +7,7 @@ import { DeleteConfirmationModal } from "./DeleteConfirmationModal";
 
 const Card = ({ _id, name, prompt, photo, onDelete, isUserProfile }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const handleDeleteClick = (e) => {
     e.stopPropagation(); // Prevent navigation event
@@ -20,12 +21,20 @@ const Card = ({ _id, name, prompt, photo, onDelete, isUserProfile }) => {
 
   return (
     <div className="shadow-lg rounded-xl group relative shadow-card transition-all duration-300 hover:shadow-lg hover:shadow-violet-400 hover:scale-[1.02] card">
+
+      {/* Show skeleton or placeholder while loading */}
+      {!isLoaded && (
+        <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
+      )}
+
       {/* Only the image and text content are wrapped in Link */}
       <Link to={`/post/${_id}`} className="block">
         <img
           className="w-full h-auto object-cover rounded-lg transition-transform duration-300 hover:scale-105"
           src={photo}
           alt={prompt}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)} // Mark image as loaded
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end rounded-md">
           <p className="text-white text-xs sm:text-sm leading-tight mb-2 truncate">{prompt}</p>
