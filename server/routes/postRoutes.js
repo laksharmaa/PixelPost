@@ -26,33 +26,59 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET ALL POSTS
+// GET ALL POSTS WITH PAGINATION
 router.get('/', async (req, res) => {
   try {
-    const posts = await Post.find({});
-    res.status(200).json({ success: true, data: posts });
+    const { page = 1, limit = 10 } = req.query; // Default to page 1, limit 10
+    const skip = (page - 1) * limit;
+
+    const posts = await Post.find({})
+      .sort({ createdAt: -1 }) // Latest posts first
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalPosts = await Post.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      data: posts,
+      totalPosts,
+      totalPages: Math.ceil(totalPosts / limit),
+    });
   } catch (error) {
-    console.error('Error fetching posts:', error);
+    console.error('Error fetching posts:', error.stack);
     res.status(500).json({ success: false, message: 'Error fetching posts' });
   }
 });
 
-// GET ALL POSTS FOR A SPECIFIC USER
+// GET ALL POSTS FOR A SPECIFIC USER WITH PAGINATION
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const userPosts = await Post.find({ userId });
-    
+    const { page = 1, limit = 10 } = req.query; // Default values for pagination
+
+    const userPosts = await Post.find({ userId })
+      .sort({ createdAt: -1 }) // Sort by latest
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalPosts = await Post.countDocuments({ userId });
+
     if (!userPosts.length) {
       return res.status(404).json({ success: false, message: 'No posts found for this user' });
     }
 
-    res.status(200).json({ success: true, data: userPosts });
+    res.status(200).json({ 
+      success: true, 
+      data: userPosts,
+      hasMore: page * limit < totalPosts // Check if there are more posts to load
+    });
   } catch (error) {
     console.error('Error fetching user posts:', error);
     res.status(500).json({ success: false, message: 'Error fetching user posts' });
   }
 });
+
 
 // GET A SPECIFIC POST BY ID
 router.get('/:id', async (req, res) => {
@@ -70,29 +96,35 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// LIKE A POST
 router.post('/:id/like', async (req, res) => {
   try {
     const { userId } = req.body;
-    
-    // Ensure userId is present
+
+    // Validate userId
     if (!userId) {
       return res.status(400).json({ success: false, message: 'userId is required to like a post' });
     }
 
+    // Ensure user exists
     await loginOrCreateUser(userId);
 
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
-    if (!post.likedBy.includes(userId)) {
-      post.likes += 1;
-      post.likedBy.push(userId);
-      await post.save();
-      res.status(200).json({ success: true, data: post });
-    } else {
-      res.status(400).json({ success: false, message: 'User has already liked this post' });
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
+
+    // Check if the user has already liked the post
+    if (post.likedBy.includes(userId)) {
+      return res.status(400).json({ success: false, message: 'User has already liked this post' });
+    }
+
+    // Add like
+    post.likes += 1;
+    post.likedBy.push(userId);
+    await post.save();
+
+    res.status(200).json({ success: true, data: post });
   } catch (error) {
     console.error('Error in like route:', error);
     res.status(500).json({ success: false, message: 'Error liking post' });
@@ -103,24 +135,38 @@ router.post('/:id/like', async (req, res) => {
 router.post('/:id/unlike', async (req, res) => {
   try {
     const { userId } = req.body;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId is required to unlike a post' });
+    }
+
+    // Ensure user exists
     await loginOrCreateUser(userId);
 
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
 
-    if (post.likedBy.includes(userId)) {
-      post.likes -= 1;
-      post.likedBy = post.likedBy.filter(id => id !== userId);
-      await post.save();
-      res.status(200).json({ success: true, data: post });
-    } else {
-      res.status(400).json({ success: false, message: 'User has not liked this post' });
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
     }
+
+    // Check if the user has liked the post
+    if (!post.likedBy.includes(userId)) {
+      return res.status(400).json({ success: false, message: 'User has not liked this post' });
+    }
+
+    // Remove like
+    post.likes -= 1;
+    post.likedBy = post.likedBy.filter((id) => id !== userId);
+    await post.save();
+
+    res.status(200).json({ success: true, data: post });
   } catch (error) {
     console.error('Error in unlike route:', error);
     res.status(500).json({ success: false, message: 'Error unliking post' });
   }
 });
+
 
 // ADD A COMMENT TO A POST
 router.post('/:id/comment', async (req, res) => {

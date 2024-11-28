@@ -39,5 +39,8 @@ const postSchema = new mongoose.Schema({
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }] // Array of comment references
 });
 
+//index for sorting posts by createdAt
+postSchema.index({ createdAt: -1 });
+
 const Post = mongoose.model('Post', postSchema);
 export default Post;
