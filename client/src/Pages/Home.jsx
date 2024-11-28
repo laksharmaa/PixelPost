@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Loader, Card, FormField } from '../components';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Loader, Card, FormField, SkeletonCard } from '../components';
+
+const POSTS_PER_PAGE = 12; // Number of posts per fetch
 
 const RenderCards = ({ data, title }) => {
   if (data?.length > 0) {
-    return data.map((post) => <Card key={post._id} {...post} />);
+    return data.map((post, index) => (
+      <Card key={`${post._id}-${index}`} {...post} />
+    ));
   }
 
   return (
@@ -13,27 +17,41 @@ const RenderCards = ({ data, title }) => {
   );
 };
 
+
 const Home = () => {
   const [loading, setLoading] = useState(false);
-  const [allPosts, setAllPosts] = useState(null);
+  const [allPosts, setAllPosts] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [searchedResults, setSearchedResults] = useState(null);
-  const [searchTimeout, setSearchTimeout] = useState(null);
+  const [page, setPage] = useState(1); // Track the current page
+  const [hasMore, setHasMore] = useState(true); // Track if more posts are available
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (pageNumber = 1) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post?page=${pageNumber}&limit=${POSTS_PER_PAGE}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
-        setAllPosts(result.data.reverse());
+        if (result.data.length === 0) {
+          setHasMore(false); // No more posts to load
+        } else {
+          setAllPosts((prevPosts) => {
+            const newPosts = result.data.filter(
+              (newPost) => !prevPosts.some((post) => post._id === newPost._id)
+            );
+            return [...prevPosts, ...newPosts];
+          });
+        }
       } else {
         console.error('Error:', response.statusText);
       }
@@ -46,24 +64,36 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    fetchPosts(page);
+  }, [page]);
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);
 
-    setSearchTimeout(
-      setTimeout(() => {
-        const searchResults = allPosts.filter(
-          (item) =>
-            item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            item.prompt.toLowerCase().includes(searchText.toLowerCase())
-        );
-
-        setSearchedResults(searchResults);
-      }, 500)
+    const searchResults = allPosts.filter(
+      (item) =>
+        item.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+        item.prompt.toLowerCase().includes(e.target.value.toLowerCase())
     );
+
+    setSearchedResults(searchResults);
   };
+
+  const handleScroll = useCallback(() => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop >=
+      document.documentElement.offsetHeight - 100 &&
+      hasMore &&
+      !loading
+    ) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  }, [hasMore, loading]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   return (
     <section
@@ -95,15 +125,18 @@ const Home = () => {
       </div>
 
       <div className="mt-10">
-        {loading ? (
-          <div className="flex justify-center items-center">
-            <Loader />
+        {loading && page === 1 ? (
+          <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
+            {Array.from({ length: POSTS_PER_PAGE }).map((_, index) => (
+              <SkeletonCard key={index} />
+            ))}
           </div>
         ) : (
           <>
             {searchText && (
               <h2 className="font-medium text-[#6b7280] dark:text-[#d1d5db] text-xl mb-3">
-                Showing results for <span className="text-darkText dark:text-lightText">{searchText}</span>
+                Showing results for{' '}
+                <span className="text-darkText dark:text-lightText">{searchText}</span>
               </h2>
             )}
 
@@ -115,6 +148,11 @@ const Home = () => {
               )}
             </div>
           </>
+        )}
+        {loading && page > 1 && (
+          <div className="flex justify-center items-center mt-5">
+            <Loader />
+          </div>
         )}
       </div>
     </section>

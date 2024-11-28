@@ -21,13 +21,6 @@ const Card = ({ _id, name, prompt, photo, onDelete, isUserProfile }) => {
 
   return (
     <div className="shadow-lg rounded-xl group relative shadow-card transition-all duration-300 hover:shadow-lg hover:shadow-violet-400 hover:scale-[1.02] card">
-
-      {/* Show skeleton or placeholder while loading */}
-      {!isLoaded && (
-        <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
-      )}
-
-      {/* Only the image and text content are wrapped in Link */}
       <Link to={`/post/${_id}`} className="block">
         <img
           className="w-full h-auto object-cover rounded-lg transition-transform duration-300 hover:scale-105"

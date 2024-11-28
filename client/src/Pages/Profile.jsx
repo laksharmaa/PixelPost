@@ -1,27 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import Loader from "../components/Loader";
 import Card from "../components/Card";
+import SkeletonCard from "../components/SkeletonCard";
 import { DeleteConfirmationModal } from "../components/DeleteConfirmationModal";
+
+const POSTS_PER_PAGE = 12;
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false); // Track deletion process
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchUserPosts = async () => {
+  const fetchUserPosts = async (pageNumber = 1) => {
+    setLoading(true);
     try {
       if (!user) return;
-  
+
       const token = await getAccessTokenSilently();
       const response = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/post/user/${encodeURIComponent(
           user.sub
-        )}`,
+        )}?page=${pageNumber}&limit=${POSTS_PER_PAGE}`,
         {
           method: "GET",
           headers: {
@@ -30,10 +35,16 @@ const Profile = () => {
           },
         }
       );
-  
+
       if (response.ok) {
         const result = await response.json();
-        setUserPosts(result.data);
+        setUserPosts((prevPosts) => {
+          const newPosts = result.data.filter(
+            (newPost) => !prevPosts.some((post) => post._id === newPost._id)
+          );
+          return [...prevPosts, ...newPosts];
+        });
+        setHasMore(result.hasMore);
       } else {
         console.error("Error fetching user posts:", response.statusText);
       }
@@ -43,13 +54,32 @@ const Profile = () => {
       setLoading(false);
     }
   };
-  
+
+  useEffect(() => {
+    fetchUserPosts(page);
+  }, [user, page]);
+
+  const handleScroll = useCallback(() => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 100 &&
+      hasMore &&
+      !loading
+    ) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  }, [hasMore, loading]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   const handleDeletePost = async () => {
     try {
-      setIsDeleting(true); // Start deletion process
+      setIsDeleting(true);
       if (!selectedPostId) return;
-  
+
       const token = await getAccessTokenSilently();
       const response = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/post/${selectedPostId}`,
@@ -61,22 +91,21 @@ const Profile = () => {
           },
         }
       );
-  
+
       if (response.ok) {
         setUserPosts((prevPosts) =>
           prevPosts.filter((post) => post._id !== selectedPostId)
         );
-        setIsModalOpen(false); // Close modal after deletion
+        setIsModalOpen(false);
       } else {
         console.error("Error deleting post:", response.statusText);
       }
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {
-      setIsDeleting(false); // Reset deletion state
+      setIsDeleting(false);
     }
   };
-  
 
   const handleOpenModal = (postId) => {
     setSelectedPostId(postId);
@@ -87,10 +116,6 @@ const Profile = () => {
     setIsModalOpen(false);
     setSelectedPostId(null);
   };
-
-  useEffect(() => {
-    fetchUserPosts();
-  }, [user]);
 
   return (
     <section className="mt-4 max-w-7xl mx-auto bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText min-h-screen p-8 rounded-lg shadow-md transition-colors duration-300 ease-in-out">
@@ -103,26 +128,38 @@ const Profile = () => {
         </p>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center">
-          <Loader />
-        </div>
-      ) : userPosts.length ? (
+      {loading && page === 1 ? (
         <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-6">
-          {userPosts.map((post) => (
-            <Card
-              key={post._id}
-              {...post}
-              onDelete={handleOpenModal}
-              isUserProfile={true} // Ensures the delete icon is displayed
-            />
+          {Array.from({ length: POSTS_PER_PAGE }).map((_, index) => (
+            <SkeletonCard key={index} />
           ))}
         </div>
       ) : (
-        <div className="text-center mt-10">
-          <h2 className="text-lightText dark:text-darkText text-xl">
-            No posts found.
-          </h2>
+        <>
+          {userPosts.length ? (
+            <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-6">
+              {userPosts.map((post) => (
+                <Card
+                  key={post._id}
+                  {...post}
+                  onDelete={handleOpenModal}
+                  isUserProfile={true}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center mt-10">
+              <h2 className="text-lightText dark:text-darkText text-xl">
+                No posts found.
+              </h2>
+            </div>
+          )}
+        </>
+      )}
+
+      {loading && page > 1 && (
+        <div className="flex justify-center items-center mt-5">
+          <Loader />
         </div>
       )}
 

@@ -71,12 +71,13 @@ const PostDetail = () => {
       alert("Please log in to like this post.");
       return;
     }
-
+  
     try {
       const token = await getAccessTokenSilently();
       const userId = user.sub;
-
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${hasLiked ? 'unlike' : 'like'}`, {
+  
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${hasLiked ? 'unlike' : 'like'}`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,17 +85,19 @@ const PostDetail = () => {
         },
         body: JSON.stringify({ userId }),
       });
-
+  
       if (response.ok) {
         setLikeCount((prev) => (hasLiked ? prev - 1 : prev + 1));
         setHasLiked(!hasLiked);
       } else {
-        console.error("Error toggling like status");
+        const errorData = await response.json();
+        console.error("Error toggling like status:", errorData.message);
       }
     } catch (error) {
       console.error('Error toggling like status:', error);
     }
   };
+  
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
