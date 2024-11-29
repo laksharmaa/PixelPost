@@ -4,7 +4,7 @@ import cors from 'cors';
 import connectDB from './mongodb/connect.js';
 import postRoutes from './routes/postRoutes.js';
 import dalleRoutes from './routes/dalleRoutes.js';
-// import userPostRoutes from './routes/userPost.js';
+import userRoutes from './routes/userRoutes.js';
 import { expressjwt } from 'express-jwt';
 import jwks from 'jwks-rsa';
 
@@ -13,7 +13,6 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
-
 app.use(express.json({ limit: '50mb' }));
 
 // Auth0 middleware for protected routes
@@ -30,12 +29,14 @@ const checkJwt = expressjwt({
   requestProperty: 'auth', 
 });
 
-// Public route (e.g., fetching posts)
+//Route for posts CRUD operations
 app.use('/api/v1/post', postRoutes);
 
-// Protected routes for actions requiring authentication
-// app.use('/api/v1/user-post', checkJwt, userPostRoutes);
+//Route for image generation
 app.use('/api/v1/dalle', checkJwt, dalleRoutes);
+
+// Add route for user info
+app.use("/api/v1/user", userRoutes);
 
 // Error handling for JWT validation
 app.use((err, req, res, next) => {
