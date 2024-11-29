@@ -4,12 +4,14 @@ import Loader from "../components/Loader";
 import Card from "../components/Card";
 import SkeletonCard from "../components/SkeletonCard";
 import { DeleteConfirmationModal } from "../components/DeleteConfirmationModal";
+import UserProfileCard from "../components/UserProfileCard"; // Import the new UserProfileCard component
 
 const POSTS_PER_PAGE = 12;
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const [userPosts, setUserPosts] = useState([]);
+  const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,11 +19,36 @@ const Profile = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  // Fetch user information
+  const fetchUserInfo = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${encodeURIComponent(user.sub)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        setUserInfo(result.data);
+      } else {
+        console.error("Error fetching user info:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+    }
+  };
+
+  // Fetch user posts
   const fetchUserPosts = async (pageNumber = 1) => {
     setLoading(true);
     try {
-      if (!user) return;
-
       const token = await getAccessTokenSilently();
       const response = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/post/user/${encodeURIComponent(
@@ -55,10 +82,13 @@ const Profile = () => {
     }
   };
 
+  // Effect: Fetch user info and posts on mount
   useEffect(() => {
+    fetchUserInfo();
     fetchUserPosts(page);
   }, [user, page]);
 
+  // Infinite scrolling handler
   const handleScroll = useCallback(() => {
     if (
       window.innerHeight + document.documentElement.scrollTop >=
@@ -75,6 +105,7 @@ const Profile = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  // Delete post
   const handleDeletePost = async () => {
     try {
       setIsDeleting(true);
@@ -107,11 +138,13 @@ const Profile = () => {
     }
   };
 
+  // Open delete confirmation modal
   const handleOpenModal = (postId) => {
     setSelectedPostId(postId);
     setIsModalOpen(true);
   };
 
+  // Close delete confirmation modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedPostId(null);
@@ -119,12 +152,16 @@ const Profile = () => {
 
   return (
     <section className="mt-4 max-w-7xl mx-auto bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText min-h-screen p-8 rounded-lg shadow-md transition-colors duration-300 ease-in-out">
+      {/* User Profile Card */}
+      {userInfo ? (
+        <UserProfileCard userInfo={userInfo} auth0User={user} />
+      ) : (
+        <Loader />
+      )}
+
       <div className="text-center mb-10">
-        <h1 className="font-extrabold text-lightText dark:text-darkText text-4xl mb-4">
-          My Profile
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">
-          Below are your created posts. You can explore and manage them here.
+        <p className="text-gray-200 text-lg">
+          Below are your created posts. You can manage them here.
         </p>
       </div>
 
@@ -149,9 +186,7 @@ const Profile = () => {
             </div>
           ) : (
             <div className="text-center mt-10">
-              <h2 className="text-lightText dark:text-darkText text-xl">
-                No posts found.
-              </h2>
+              <h2 className="text-gray-100 text-xl">No posts found.</h2>
             </div>
           )}
         </>

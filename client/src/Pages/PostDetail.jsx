@@ -18,6 +18,7 @@ const PostDetail = () => {
   const [hasLiked, setHasLiked] = useState(false);
   const [viewUpdated, setViewUpdated] = useState(false);
 
+  // Fetch post data
   const fetchPost = async () => {
     setLoading(true);
     try {
@@ -53,6 +54,7 @@ const PostDetail = () => {
     }
   };
 
+  // Update view count
   const updateViewCount = async (newViewCount) => {
     try {
       await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/view`, {
@@ -66,6 +68,7 @@ const PostDetail = () => {
     }
   };
 
+  // Handle Like
   const handleLike = async () => {
     if (!isAuthenticated || !user) {
       alert("Please log in to like this post.");
@@ -97,8 +100,8 @@ const PostDetail = () => {
       console.error('Error toggling like status:', error);
     }
   };
-  
 
+  // Handle comment submission
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!isAuthenticated) {
@@ -150,8 +153,7 @@ const PostDetail = () => {
 
   return (
     <section 
-      className="max-w-4xl mx-auto min-h-screen p-4 sm:p-8 rounded-xl transition-colors duration-300 ease-in-out 
-                 bg-white text-gray-900 dark:bg-gray-900 dark:text-white flex flex-col items-center justify-center"
+      className="max-w-4xl mx-auto min-h-screen p-4 sm:p-8 rounded-xl transition-colors duration-300 ease-in-out bg-white text-gray-900 dark:bg-gray-900 dark:text-white flex flex-col items-center justify-center"
     >
       {loading ? (
         <div className="flex justify-center items-center h-full w-full">
@@ -159,47 +161,53 @@ const PostDetail = () => {
         </div>
       ) : post ? (
         <>
-          <div className="flex flex-col items-center w-full">
-            <img 
-              src={post.photo} 
-              alt={post.prompt} 
-              className="rounded-lg mb-4 w-full max-w-screen-md object-contain"
-              style={{ maxHeight: '512px' }} // Reduce max height for smaller devices
-            />
-            <h2 className="text-base sm:text-lg font-mono mb-2 text-center px-2">{post.prompt}</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm sm:text-base">
-              Posted by: {post.name}
-            </p>
+          <div className="flex flex-col sm:flex-row items-center w-full gap-6">
+            {/* Image Section */}
+            <div className="sm:w-1/2 flex justify-center">
+              <img 
+                src={post.photo} 
+                alt={post.prompt} 
+                className="rounded-lg mb-4 sm:mb-0 w-full max-w-xs object-contain"
+                style={{ maxHeight: '512px' }}
+              />
+            </div>
+            
+            {/* Post Details */}
+            <div className="sm:w-1/2 flex flex-col gap-4">
+              <h2 className="text-base sm:text-lg font-mono mb-2 text-center px-2">{post.prompt}</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm sm:text-base">
+                Posted by: {post.name}
+              </p>
   
-            <div className="flex flex-wrap gap-4 justify-center mb-6">
-              <button onClick={handleLike} className="flex items-center gap-1 text-sm sm:text-base">
-                {hasLiked ? (
-                  <FavoriteIcon style={{ color: 'red' }} />
-                ) : (
-                  <FavoriteBorderIcon className="text-gray-600 dark:text-white" />
-                )}
-                <span className="text-gray-900 dark:text-white">{likeCount}</span>
-              </button>
+              <div className="flex gap-6 justify-center sm:justify-start mb-6">
+                <button onClick={handleLike} className="flex items-center gap-1 text-sm sm:text-base">
+                  {hasLiked ? (
+                    <FavoriteIcon style={{ color: 'red' }} />
+                  ) : (
+                    <FavoriteBorderIcon className="text-gray-600 dark:text-white" />
+                  )}
+                  <span className="text-gray-900 dark:text-white">{likeCount}</span>
+                </button>
   
-              <div className="flex items-center gap-1 text-sm sm:text-base">
-                <RemoveRedEyeOutlinedIcon className="text-gray-600 dark:text-white" />
-                <span className="text-gray-900 dark:text-white">{post.views}</span>
+                <div className="flex items-center gap-1 text-sm sm:text-base">
+                  <RemoveRedEyeOutlinedIcon className="text-gray-600 dark:text-white" />
+                  <span className="text-gray-900 dark:text-white">{post.views}</span>
+                </div>
+  
+                <button 
+                  onClick={() => setShowComments(!showComments)} 
+                  className="flex items-center gap-1 text-gray-900 dark:text-white text-sm sm:text-base"
+                >
+                  <ChatBubbleOutlineRoundedIcon />
+                  {post.commentCount}
+                </button>
               </div>
-  
-              <button 
-                onClick={() => setShowComments(!showComments)} 
-                className="flex items-center gap-1 text-gray-900 dark:text-white text-sm sm:text-base"
-              >
-                <ChatBubbleOutlineRoundedIcon />
-                {post.commentCount}
-              </button>
             </div>
           </div>
-  
-          <hr className="my-6 border-gray-300 dark:border-gray-700 w-full" />
-  
+
+          {/* Comments Section */}
           {showComments && (
-            <div className="comments w-full">
+            <div className="comments w-full mt-6">
               <h3 className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left">Comments ({post.comments.length})</h3>
               <ul className="px-2 sm:px-4">
                 {post.comments.map((comment, index) => (
@@ -214,33 +222,30 @@ const PostDetail = () => {
                   </li>
                 ))}
               </ul>
-              {isAuthenticated && (
-                <form onSubmit={handleCommentSubmit} className="mt-4">
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="w-full p-3 text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 rounded-md mb-2 resize-none focus:outline-none text-sm sm:text-base"
-                    placeholder="Add a comment..."
-                    rows="3"
-                  ></textarea>
-                  <button 
-                    type="submit" 
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md transition-colors w-full sm:w-auto"
-                  >
-                    Submit Comment
-                  </button>
-                </form>
-              )}
+
+              <form onSubmit={handleCommentSubmit} className="mt-4 flex flex-col gap-2">
+                <textarea 
+                  value={newComment} 
+                  onChange={(e) => setNewComment(e.target.value)} 
+                  className="p-2 rounded border border-gray-300 dark:border-gray-600 text-sm sm:text-base dark:bg-gray-800 dark:text-white" 
+                  placeholder="Add a comment..." 
+                  rows="3"
+                />
+                <button 
+                  type="submit" 
+                  className="self-start bg-blue-500 text-white p-2 rounded mt-2"
+                >
+                  Comment
+                </button>
+              </form>
             </div>
           )}
         </>
       ) : (
-        <p className="text-gray-900 dark:text-white text-center">Post not found.</p>
+        <div className="text-center text-xl text-red-600">Post not found</div>
       )}
     </section>
   );
-  
-  
 };
 
 export default PostDetail;
