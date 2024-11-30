@@ -5,6 +5,7 @@ import Card from "../components/Card";
 import SkeletonCard from "../components/SkeletonCard";
 import { DeleteConfirmationModal } from "../components/DeleteConfirmationModal";
 import UserProfileCard from "../components/UserProfileCard"; // Import the new UserProfileCard component
+import UserProfileCardSkeleton from "../components/UserProfileCardSkeleton"; // Import the skeleton loader
 
 const POSTS_PER_PAGE = 12;
 
@@ -156,7 +157,7 @@ const Profile = () => {
       {userInfo ? (
         <UserProfileCard userInfo={userInfo} auth0User={user} />
       ) : (
-        <Loader />
+        <UserProfileCardSkeleton />
       )}
 
       <div className="text-center mb-10">
@@ -168,7 +169,7 @@ const Profile = () => {
       {loading && page === 1 ? (
         <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-6">
           {Array.from({ length: POSTS_PER_PAGE }).map((_, index) => (
-            <SkeletonCard key={index} />
+            <SkeletonCard key={index} /> 
           ))}
         </div>
       ) : (
@@ -194,7 +195,7 @@ const Profile = () => {
 
       {loading && page > 1 && (
         <div className="flex justify-center items-center mt-5">
-          <Loader />
+          <Loader /> {/* Show loader for more posts */}
         </div>
       )}
 
