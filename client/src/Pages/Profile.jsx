@@ -24,8 +24,10 @@ const Profile = () => {
   const fetchUserInfo = async () => {
     try {
       const token = await getAccessTokenSilently();
+      const userId = encodeURIComponent(user.sub); // Ensure the userId is encoded
+  
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${encodeURIComponent(user.sub)}`,
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${userId}`,  // Ensure the URL is correctly formatted
         {
           method: "GET",
           headers: {
@@ -34,7 +36,7 @@ const Profile = () => {
           },
         }
       );
-
+  
       if (response.ok) {
         const result = await response.json();
         setUserInfo(result.data);
@@ -44,7 +46,7 @@ const Profile = () => {
     } catch (error) {
       console.error("Error fetching user info:", error);
     }
-  };
+  };  
 
   // Fetch user posts
   const fetchUserPosts = async (pageNumber = 1) => {
