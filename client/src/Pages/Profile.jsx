@@ -163,7 +163,7 @@ const Profile = () => {
       )}
 
       <div className="text-center mb-10">
-        <p className="text-gray-200 text-lg">
+        <p className="text-gray-500 text-lg">
           Below are your created posts. You can manage them here.
         </p>
       </div>
