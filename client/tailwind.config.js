@@ -7,6 +7,9 @@ export default {
   ],
   theme: {
     extend: {
+      backdropBlur: {
+        md: '12px',
+      },
       colors: {
         lightBg: '#ffffff', // Light mode background
         darkBg: '#111827', // Dark mode background
@@ -21,11 +24,10 @@ export default {
           to: { backgroundPosition: '-200% 0' },
         },
       },
-      animation: {
-        pulse: 'shimmer 1.5s infinite',
-      },   
     },
-    
+
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/aspect-ratio'),
+  ],
 }

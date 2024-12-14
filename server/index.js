@@ -36,7 +36,7 @@ app.use('/api/v1/post', postRoutes);
 app.use('/api/v1/dalle', checkJwt, dalleRoutes);
 
 // Add route for user info
-app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/user", checkJwt, userRoutes);
 
 // Error handling for JWT validation
 app.use((err, req, res, next) => {

@@ -96,74 +96,80 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Optimized Like/Unlike Routes
 router.post('/:id/like', async (req, res) => {
   try {
     const { userId } = req.body;
-
-    // Validate userId
     if (!userId) {
-      return res.status(400).json({ success: false, message: 'userId is required to like a post' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User authentication required' 
+      });
     }
 
-    // Ensure user exists
-    await loginOrCreateUser(userId);
-
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { 
+        $addToSet: { likedBy: userId }, // Prevents duplicate entries
+        $inc: { likes: 1 } 
+      },
+      { 
+        new: true, 
+        runValidators: true 
+      }
+    );
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Post not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Post not found' 
+      });
     }
-
-    // Check if the user has already liked the post
-    if (post.likedBy.includes(userId)) {
-      return res.status(400).json({ success: false, message: 'User has already liked this post' });
-    }
-
-    // Add like
-    post.likes += 1;
-    post.likedBy.push(userId);
-    await post.save();
 
     res.status(200).json({ success: true, data: post });
   } catch (error) {
-    console.error('Error in like route:', error);
-    res.status(500).json({ success: false, message: 'Error liking post' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during like operation' 
+    });
   }
 });
 
-// UNLIKE A POST
 router.post('/:id/unlike', async (req, res) => {
   try {
     const { userId } = req.body;
-
-    // Validate userId
     if (!userId) {
-      return res.status(400).json({ success: false, message: 'userId is required to unlike a post' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User authentication required' 
+      });
     }
 
-    // Ensure user exists
-    await loginOrCreateUser(userId);
-
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { 
+        $pull: { likedBy: userId },
+        $inc: { likes: -1 } 
+      },
+      { 
+        new: true, 
+        runValidators: true 
+      }
+    );
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Post not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Post not found' 
+      });
     }
-
-    // Check if the user has liked the post
-    if (!post.likedBy.includes(userId)) {
-      return res.status(400).json({ success: false, message: 'User has not liked this post' });
-    }
-
-    // Remove like
-    post.likes -= 1;
-    post.likedBy = post.likedBy.filter((id) => id !== userId);
-    await post.save();
 
     res.status(200).json({ success: true, data: post });
   } catch (error) {
-    console.error('Error in unlike route:', error);
-    res.status(500).json({ success: false, message: 'Error unliking post' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during unlike operation' 
+    });
   }
 });
 
@@ -187,10 +193,9 @@ router.post('/:id/comment', async (req, res) => {
 // Backend route to handle view increment
 router.post('/:id/view', async (req, res) => {
   try {
-    const { views } = req.body;
     const post = await Post.findByIdAndUpdate(
       req.params.id,
-      { $set: { views } },
+      { $inc: { views: 1 } }, // Increment views by 1
       { new: true }
     );
 
