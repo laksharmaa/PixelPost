@@ -1,17 +1,21 @@
+// App.jsx
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Home, CreatePost, Profile, PostDetail } from './Pages';
 import PrivateRoute from './Pages/PrivateRoute';
-import CustomNavbar from "./components/CustomNavbar"; // New Navbar
+import CustomNavbar from "./components/CustomNavbar";
 import { useTheme } from './context/ThemeContext';
+import NotificationsPlaceholder from './Pages/NotificationsPlaceholder';
+import BookmarksPlaceholder from './Pages/BookmarksPlaceholder';
+import NotFound from './Pages/NotFound';
 
 function App() {
   const { isDarkMode } = useTheme();
 
   return (
-    <div className={`${isDarkMode ? 'dark' : ''} min-h-screen`}>
+    <div className={`${isDarkMode ? 'dark' : ''} min-h-screen bg-gray-50 dark:bg-gray-900`}>
       <CustomNavbar />
-      <main className="sm:p-8 px-4 py-8 w-full min-h-[calc(100vh-73px)] bg-slate-200 dark:bg-gray-800 text-lightText dark:text-darkText">
+      <div className="lg:ml-24 p-4">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/create-post" element={
@@ -24,9 +28,12 @@ function App() {
               <Profile />
             </PrivateRoute>
           } />
+          <Route path="/notifications" element={<NotificationsPlaceholder />} />
+          <Route path="/bookmarks" element={<BookmarksPlaceholder />} />
           <Route path="/post/:id" element={<PostDetail />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-      </main>
+      </div>
     </div>
   );
 }

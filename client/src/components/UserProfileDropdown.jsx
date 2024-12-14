@@ -1,68 +1,111 @@
-import React, { useState } from "react";
+// UserProfileDropdown.jsx
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 
-const UserProfileDropdown = ({ userName, userEmail, avatarSrc, onLogout, includeProfileOption }) => {
+const UserProfileDropdown = ({ 
+  userName, 
+  userEmail, 
+  avatarSrc, 
+  onLogout, 
+  includeProfileOption,
+  isDarkMode,
+  toggleDarkMode,
+  isMobile = false
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const toggleDropdown = (e) => {
-    e.stopPropagation(); // Prevent toggling unrelated actions like dark mode.
-    setIsDropdownOpen((prev) => !prev);
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
 
-  const handleProfileClick = () => {
-    setIsDropdownOpen(false); // Close dropdown after clicking.
-    navigate("/profile");
-  };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div className="relative">
-      {/* Avatar Button */}
+    <div className="relative" ref={dropdownRef}>
       <button
-        id="avatarButton"
-        type="button"
-        onClick={toggleDropdown}
-        className="w-10 h-10 rounded-full cursor-pointer"
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        className="w-8 h-8 rounded-full"
       >
         <img
-          src={avatarSrc || "/default-avatar.png"}
-          alt="User dropdown"
-          className="w-full h-full rounded-full"
+          src={avatarSrc}
+          alt="User"
+          className="w-full h-full rounded-full border border-blue-500"
         />
       </button>
 
-      {/* Dropdown Menu */}
       {isDropdownOpen && (
-        <div
-          id="userDropdown"
-          className="absolute right-0 z-10 mt-2 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+        <div className={`absolute ${isMobile ? 'bottom-full' : 'bottom-full'} 
+          left-14  w-50 rounded-2xl shadow-xl overflow-hidden
+          ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
         >
-          {/* User Info */}
-          <div className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-            <div>{userName || "User Name"}</div>
-            <div className="font-medium truncate">{userEmail || "email@example.com"}</div>
+          <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <img src={avatarSrc} alt="profile" className="w-10 h-10 rounded-full" />
+              <div>
+                <div className="font-medium">{userName}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{userEmail}</div>
+              </div>
+            </div>
           </div>
 
-          {/* Menu Items */}
-          {includeProfileOption && (
-            <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
-              <li>
-                <button
-                  onClick={handleProfileClick}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                >
-                  My Profile
-                </button>
-              </li>
-            </ul>
-          )}
+          <div className="p-2">
+            {includeProfileOption && (
+              <button
+                onClick={() => {
+                  navigate("/profile");
+                  setIsDropdownOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <UserCircleIcon className="w-5 h-5" />
+                My Profile
+              </button>
+            )}
+            
+            {isMobile && (
+              <button
+                onClick={toggleDarkMode}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {isDarkMode ? (
+                  <>
+                    <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="4"/>
+                      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                    </svg>
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                    </svg>
+                    Dark Mode
+                  </>
+                )}
+              </button>
+            )}
 
-          {/* Sign Out */}
-          <div className="py-1">
             <button
-              onClick={onLogout}
-              className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+              onClick={() => {
+                setIsDropdownOpen(false);
+                onLogout();
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500"
             >
+              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
               Sign Out
             </button>
           </div>
