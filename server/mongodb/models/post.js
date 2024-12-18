@@ -24,6 +24,10 @@ const postSchema = new mongoose.Schema({
     likedBy: {
         type: [String], default: []
     },
+    bookmarkedBy: [{
+        type: String, // Store user IDs
+        ref: 'User'
+    }],
     views: {
         type: Number,
         default: 0,

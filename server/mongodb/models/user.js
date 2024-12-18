@@ -39,6 +39,12 @@ const userSchema = new mongoose.Schema({
             type: String, // Array of `userId`s this user is following
         },
     ],
+    bookmarks: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Post'
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now,

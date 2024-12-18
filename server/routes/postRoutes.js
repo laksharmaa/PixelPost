@@ -251,5 +251,101 @@ router.delete('/:id', async (req, res) => {
 });
 
 
+// Bookmark a post
+router.post('/:id/bookmark', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID required' });
+    }
+
+    // Update both Post and User models
+    const [post, user] = await Promise.all([
+      Post.findByIdAndUpdate(
+        req.params.id,
+        { $addToSet: { bookmarkedBy: userId } },
+        { new: true }
+      ),
+      User.findOneAndUpdate(
+        { userId },
+        { $addToSet: { bookmarks: req.params.id } },
+        { new: true }
+      )
+    ]);
+
+    if (!post || !user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Post or User not found' 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: { post, bookmarks: user.bookmarks } 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error bookmarking post' });
+  }
+});
+
+// Remove bookmark
+router.post('/:id/unbookmark', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID required' });
+    }
+
+    // Update both Post and User models
+    const [post, user] = await Promise.all([
+      Post.findByIdAndUpdate(
+        req.params.id,
+        { $pull: { bookmarkedBy: userId } },
+        { new: true }
+      ),
+      User.findOneAndUpdate(
+        { userId },
+        { $pull: { bookmarks: req.params.id } },
+        { new: true }
+      )
+    ]);
+
+    if (!post || !user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Post or User not found' 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: { post, bookmarks: user.bookmarks } 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error removing bookmark' });
+  }
+});
+
+// Get user's bookmarked posts
+router.get('/bookmarks/:userId', async (req, res) => {
+  try {
+    const posts = await Post.find({ 
+      bookmarkedBy: req.params.userId 
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      data: posts 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error fetching bookmarks' 
+    });
+  }
+});
+
+
 
 export default router;
