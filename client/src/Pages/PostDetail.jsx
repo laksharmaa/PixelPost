@@ -8,7 +8,9 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import AccountCircleSharpIcon from "@mui/icons-material/AccountCircleSharp";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { BookmarkIcon as BookmarkOutline } from "@heroicons/react/24/outline";
+import { BookmarkIcon as BookmarkSolid } from "@heroicons/react/24/solid";
 
 const fetchPost = async (id) => {
   const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}`);
@@ -18,50 +20,23 @@ const fetchPost = async (id) => {
 
 const PostDetail = () => {
   const { id } = useParams();
-  const {
-    isAuthenticated,
-    getAccessTokenSilently,
-    user,
-    loginWithRedirect
-  } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently, user, loginWithRedirect } = useAuth0();
   const queryClient = useQueryClient();
 
+  // Hooks for managing states
   const [newComment, setNewComment] = useState("");
   const [isLiking, setIsLiking] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-
-  // View tracking
-  // Add a state to track if view has been counted
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const [viewCounted, setViewCounted] = useState(false);
 
-  // Modify the view tracking useEffect
-  useEffect(() => {
-    const trackView = async () => {
-      // Only track view if not already counted
-      if (!viewCounted) {
-        try {
-          const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/view`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-
-          if (response.ok) {
-            setViewCounted(true);
-          }
-        } catch (error) {
-          console.error('Failed to track view:', error);
-        }
-      }
-    };
-
-    trackView();  }, [id, viewCounted]); // Add viewCounted to dependency array
-
+  // Fetch Post Query
   const postQuery = useQuery({
     queryKey: ["post", id],
     queryFn: () => fetchPost(id),
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
-    refetchOnWindowFocus: false
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 
   const likeMutation = useMutation({
@@ -82,7 +57,6 @@ const PostDetail = () => {
     onMutate: async ({ liked }) => {
       setIsLiking(true);
       const prevData = queryClient.getQueryData(["post", id]);
-
       queryClient.setQueryData(["post", id], (old) => ({
         ...old,
         data: {
@@ -115,13 +89,11 @@ const PostDetail = () => {
         },
         body: JSON.stringify(commentData),
       });
-
       if (!response.ok) throw new Error("Failed to add comment");
       return response.json();
     },
     onMutate: async (newComment) => {
       const prevData = queryClient.getQueryData(["post", id]);
-
       queryClient.setQueryData(["post", id], (old) => ({
         ...old,
         data: {
@@ -129,12 +101,11 @@ const PostDetail = () => {
           comments: [...(old.data.comments || []), {
             ...newComment,
             _id: Date.now().toString(),
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           }],
           commentCount: (old.data.commentCount || 0) + 1,
         },
       }));
-
       return { prevData };
     },
     onError: (error, newComment, context) => {
@@ -144,8 +115,25 @@ const PostDetail = () => {
     onSettled: () => {
       setIsSubmittingComment(false);
       setNewComment("");
-    }
+    },
   });
+
+  useEffect(() => {
+    const trackView = async () => {
+      if (!viewCounted) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/view`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+          if (response.ok) setViewCounted(true);
+        } catch (error) {
+          console.error("Failed to track view:", error);
+        }
+      }
+    };
+    trackView();
+  }, [id, viewCounted]);
 
   const handleLike = () => {
     if (!isAuthenticated) {
@@ -153,8 +141,66 @@ const PostDetail = () => {
       return;
     }
     likeMutation.mutate({
-      liked: postQuery.data?.data?.likedBy?.includes(user?.sub)
+      liked: postQuery.data?.data?.likedBy?.includes(user?.sub),
     });
+  };
+
+  useEffect(() => {
+    const checkBookmarkStatus = async () => {
+      if (isAuthenticated && user?.sub) {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_BASE_URL}/api/v1/post/bookmarks/${user.sub}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setIsBookmarked(data.data.some(bookmark => bookmark._id === id));
+          }
+        } catch (error) {
+          console.error('Failed to check bookmark status:', error);
+        }
+      }
+    };
+    checkBookmarkStatus();
+  }, [id, isAuthenticated, user?.sub]);
+  
+  // Update the bookmark mutation
+  const bookmarkMutation = useMutation({
+    mutationFn: async () => {
+      if (!isAuthenticated) {
+        loginWithRedirect();
+        return;
+      }
+      const token = await getAccessTokenSilently();
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${
+        isBookmarked ? 'unbookmark' : 'bookmark'
+      }`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user?.sub }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle bookmark');
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsBookmarked(!isBookmarked);
+      queryClient.invalidateQueries(['bookmarks']);
+      queryClient.invalidateQueries(['post', id]);
+    },
+  });
+
+  const handleBookmark = () => {
+    if (!isAuthenticated) {
+      loginWithRedirect({
+        appState: { returnTo: window.location.pathname },
+      });
+      return;
+    }
+    bookmarkMutation.mutate();
   };
 
   const handleCommentSubmit = (e) => {
@@ -164,11 +210,7 @@ const PostDetail = () => {
       return;
     }
     if (!newComment.trim() || isSubmittingComment) return;
-
-    commentMutation.mutate({
-      userId: user?.sub,
-      comment: newComment
-    });
+    commentMutation.mutate({ userId: user?.sub, comment: newComment });
   };
 
   if (postQuery.isLoading) return <Loader />;
@@ -181,8 +223,7 @@ const PostDetail = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="max-w-5xl mx-auto min-h-screen p-4 sm:p-8 rounded-2xl transition-colors ease-out duration-300 bg-white dark:bg-gray-900 dark:text-white text-gray-900"
+      className="container"
     >
       <div className="max-w-5xl mx-auto min-h-screen p-4 sm:p-8 rounded-2xl transition-colors ease-out duration-300 bg-white dark:bg-gray-900 dark:text-white text-gray-900">
         {post ? (
@@ -238,6 +279,18 @@ const PostDetail = () => {
                   </div>
                 </div>
               </div>
+
+              <button
+                onClick={handleBookmark}
+                className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {isBookmarked ? (
+                  <BookmarkSolid className="w-5 h-5 text-blue-500" />
+                ) : (
+                  <BookmarkOutline className="w-5 h-5" />
+                )}
+                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+              </button>
 
               {/* Comment Input */}
               {showComments && (

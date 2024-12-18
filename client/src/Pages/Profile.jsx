@@ -6,6 +6,8 @@ import SkeletonCard from "../components/SkeletonCard";
 import { DeleteConfirmationModal } from "../components/DeleteConfirmationModal";
 import UserProfileCard from "../components/UserProfileCard"; // Import the new UserProfileCard component
 import UserProfileCardSkeleton from "../components/UserProfileCardSkeleton"; // Import the skeleton loader
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 
 const POSTS_PER_PAGE = 12;
 
@@ -19,13 +21,48 @@ const Profile = () => {
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const queryClient = useQueryClient();
+
+  // Add bookmark mutation
+  const bookmarkMutation = useMutation({
+    mutationFn: async ({ postId, isBookmarked }) => {
+      const token = await getAccessTokenSilently();
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}/${isBookmarked ? 'unbookmark' : 'bookmark'
+        }`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user?.sub }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle bookmark');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['posts']);
+      queryClient.invalidateQueries(['bookmarks']);
+    },
+  });
+
+  // Add handleBookmark function
+  const handleBookmark = (postId) => {
+    const post = userPosts.find((p) => p._id === postId);
+    if (post) {
+      bookmarkMutation.mutate({
+        postId,
+        isBookmarked: post.bookmarkedBy?.includes(user?.sub),
+      });
+    }
+  };
 
   // Fetch user information
   const fetchUserInfo = async () => {
     try {
       const token = await getAccessTokenSilently();
       const userId = encodeURIComponent(user.sub); // Ensure the userId is encoded
-  
+
       const response = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/user/${userId}`,  // Ensure the URL is correctly formatted
         {
@@ -36,7 +73,7 @@ const Profile = () => {
           },
         }
       );
-  
+
       if (response.ok) {
         const result = await response.json();
         setUserInfo(result.data);
@@ -46,7 +83,7 @@ const Profile = () => {
     } catch (error) {
       console.error("Error fetching user info:", error);
     }
-  };  
+  };
 
   // Fetch user posts
   const fetchUserPosts = async (pageNumber = 1) => {
@@ -93,19 +130,22 @@ const Profile = () => {
 
   // Infinite scrolling handler
   const handleScroll = useCallback(() => {
+    const scrollPosition = window.innerHeight + document.documentElement.scrollTop;
+    const scrollThreshold = document.documentElement.offsetHeight - 100;
+
     if (
-      window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 100 &&
+      scrollPosition >= scrollThreshold &&
       hasMore &&
       !loading
     ) {
-      setPage((prevPage) => prevPage + 1);
+      setPage(prevPage => prevPage + 1);
     }
   }, [hasMore, loading]);
 
+  // Add scroll event listener
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
   // Delete post
@@ -154,52 +194,117 @@ const Profile = () => {
   };
 
   return (
-    <section className="mt-4 max-w-7xl mx-auto bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText min-h-screen p-8 rounded-lg shadow-md transition-colors duration-300 ease-in-out">
-      {/* User Profile Card */}
-      {userInfo ? (
-        <UserProfileCard userInfo={userInfo} auth0User={user} />
-      ) : (
-        <UserProfileCardSkeleton />
-      )}
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="mt-4 max-w-7xl mx-auto bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText min-h-screen p-8 rounded-lg shadow-md transition-colors duration-300 ease-in-out"
+    >
+      {/* User Profile Card with animation */}
+      <AnimatePresence mode="wait">
+        {userInfo ? (
+          <motion.div
+            key="profile-card"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <UserProfileCard userInfo={userInfo} auth0User={user} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="profile-skeleton"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <UserProfileCardSkeleton />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="text-center mb-10">
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="text-center mb-10"
+      >
         <p className="text-gray-500 text-lg">
           Below are your created posts. You can manage them here.
         </p>
-      </div>
+      </motion.div>
 
-      {loading && page === 1 ? (
-        <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-6">
-          {Array.from({ length: POSTS_PER_PAGE }).map((_, index) => (
-            <SkeletonCard key={index} /> 
-          ))}
-        </div>
-      ) : (
-        <>
-          {userPosts.length ? (
-            <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-6">
-              {userPosts.map((post) => (
-                <Card
-                  key={post._id}
-                  {...post}
-                  onDelete={handleOpenModal}
-                  isUserProfile={true}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center mt-10">
-              <h2 className="text-gray-100 text-xl">No posts found.</h2>
-            </div>
-          )}
-        </>
-      )}
+      <AnimatePresence mode="wait">
+        {loading && page === 1 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3"
+          >
+            {Array.from({ length: POSTS_PER_PAGE }).map((_, index) => (
+              <motion.div
+                key={`skeleton-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <SkeletonCard />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {userPosts.length ? (
+              <motion.div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
+                {userPosts.map((post, index) => (
+                  <motion.div
+                    key={post._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card
+                      {...post}
+                      onDelete={handleOpenModal}
+                      isUserProfile={true}
+                      isBookmarked={post.bookmarkedBy?.includes(user?.sub)}
+                      onBookmark={handleBookmark}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mt-10"
+              >
+                <h2 className="text-gray-100 text-xl">No posts found.</h2>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {loading && page > 1 && (
-        <div className="flex justify-center items-center mt-5">
-          <Loader /> {/* Show loader for more posts */}
-        </div>
-      )}
+      {/* Loading indicator with animation */}
+      <AnimatePresence>
+        {loading && page > 1 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex justify-center items-center mt-5"
+          >
+            <Loader />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <DeleteConfirmationModal
         isOpen={isModalOpen}
@@ -207,7 +312,7 @@ const Profile = () => {
         onConfirm={handleDeletePost}
         isDeleting={isDeleting}
       />
-    </section>
+    </motion.section>
   );
 };
 

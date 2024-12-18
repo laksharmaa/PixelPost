@@ -1,44 +1,63 @@
 // Pages/BookmarksPlaceholder.jsx
 import React from 'react';
-import { motion } from 'framer-motion';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useQuery } from '@tanstack/react-query';
+import Card from '../components/Card';
+import Loader from '../components/Loader';
 
-const BookmarksPlaceholder = () => {
-  return (
-    <div className="max-w-2xl mx-auto pt-8">
-      <motion.h1
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="text-2xl font-bold mb-6 dark:text-white"
-      >
-        Bookmarks
-      </motion.h1>
-      
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-center py-16"
-      >
-        <div className="inline-flex p-4 rounded-full bg-blue-50 dark:bg-blue-900/20 mb-4">
-          <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-        </div>
-        <h2 className="text-xl font-semibold mb-2 dark:text-white">No bookmarks yet</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Save interesting posts to read them later!
-        </p>
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-sm text-blue-500"
+const BookmarksPage = () => {
+  const { user, isAuthenticated, loginWithRedirect } = useAuth0();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['bookmarks', user?.sub],
+    queryFn: async () => {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/bookmarks/${user?.sub}`);
+      if (!response.ok) throw new Error('Failed to fetch bookmarks');
+      return response.json();
+    },
+    enabled: !!user?.sub,
+  });
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-16">
+        <h2 className="text-xl font-semibold mb-4">Sign in to view your bookmarks</h2>
+        <button
+          onClick={() => loginWithRedirect()}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg"
         >
-          Feature coming soon! 🚀
-        </motion.div>
-      </motion.div>
+          Sign In
+        </button>
+      </div>
+    );
+  }
+
+  if (isLoading) return <Loader />;
+
+  const bookmarks = data?.data || [];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-bold mb-6">Your Bookmarks</h1>
+      {bookmarks.length === 0 ? (
+        <div className="text-center py-16">
+          <h2 className="text-xl font-semibold mb-2">No bookmarks yet</h2>
+          <p className="text-gray-600">Save interesting posts to see them later!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {bookmarks.map((post) => (
+            <Card
+              key={post._id}
+              {...post}
+              isBookmarked={true}
+              onBookmark={() => {/* Handle unbookmark */}}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default BookmarksPlaceholder;
+export default BookmarksPage;

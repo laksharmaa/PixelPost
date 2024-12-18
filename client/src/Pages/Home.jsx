@@ -1,94 +1,168 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Loader, Card, FormField, SkeletonCard } from '../components';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Card from "../components/Card";
+import Loader from "../components/Loader";
+import FormField from "../components/FormField";
+import SkeletonCard from "../components/SkeletonCard";
+import { motion, AnimatePresence } from "framer-motion";
 
-const POSTS_PER_PAGE = 12; // Number of posts per fetch
-
-const RenderCards = ({ data, title }) => {
+const RenderCards = ({ data, title, onDelete, isUserProfile, onBookmark, user }) => {
   if (data?.length > 0) {
     return data.map((post, index) => (
-      <Card key={`${post._id}-${index}`} {...post} />
+      <motion.div
+        key={post._id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, delay: index * 0.1 }}
+      >
+        <Card
+          {...post}
+          onDelete={onDelete}
+          isUserProfile={isUserProfile}
+          isBookmarked={post.bookmarkedBy?.includes(user?.sub)}
+          onBookmark={onBookmark}
+        />
+      </motion.div>
     ));
   }
 
   return (
-    <h2 className="mt-5 font-bold text-lightText dark:text-darkText text-xl uppercase">
+    <motion.h2
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="mt-5 font-bold text-[#6449ff] text-xl uppercase"
+    >
       {title}
-    </h2>
+    </motion.h2>
   );
 };
 
-
 const Home = () => {
-  const [loading, setLoading] = useState(false);
-  const [allPosts, setAllPosts] = useState([]);
-  const [searchText, setSearchText] = useState('');
-  const [searchedResults, setSearchedResults] = useState(null);
-  const [page, setPage] = useState(1); // Track the current page
-  const [hasMore, setHasMore] = useState(true); // Track if more posts are available
+  const [searchText, setSearchText] = useState("");
+  const { isAuthenticated, getAccessTokenSilently, user } = useAuth0();
+  const queryClient = useQueryClient();
 
-  const fetchPosts = async (pageNumber = 1) => {
-    setLoading(true);
+  // Fetch posts with infinite scroll
+  const fetchPosts = async ({ pageParam = 1 }) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_BASE_URL}/api/v1/post?page=${pageParam}&limit=9`
+    );
+    if (!response.ok) throw new Error("Network response was not ok");
+    return response.json();
+  };
 
-    try {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.data.length < 9) return undefined;
+      return pages.length + 1;
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (postId) => {
+      const token = await getAccessTokenSilently();
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/post?page=${pageNumber}&limit=${POSTS_PER_PAGE}`,
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}`,
         {
-          method: 'GET',
+          method: "DELETE",
           headers: {
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
         }
       );
+      if (!response.ok) throw new Error("Failed to delete post");
+      return postId;
+    },
+    onSuccess: (postId) => {
+      queryClient.setQueryData(["posts"], (old) => ({
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          data: page.data.filter((post) => post._id !== postId),
+        })),
+      }));
+    },
+  });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.data.length === 0) {
-          setHasMore(false); // No more posts to load
-        } else {
-          setAllPosts((prevPosts) => {
-            const newPosts = result.data.filter(
-              (newPost) => !prevPosts.some((post) => post._id === newPost._id)
-            );
-            return [...prevPosts, ...newPosts];
-          });
-        }
-      } else {
-        console.error('Error:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      alert('Error fetching posts');
-    } finally {
-      setLoading(false);
+  // Bookmark mutation
+  const bookmarkMutation = useMutation({
+    mutationFn: async ({ postId, isBookmarked }) => {
+      const token = await getAccessTokenSilently();
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}/${isBookmarked ? 'unbookmark' : 'bookmark'
+        }`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user?.sub }),
+      });
+      if (!response.ok) throw new Error('Failed to toggle bookmark');
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate and refetch the posts query to get updated bookmark status
+      queryClient.invalidateQueries(['posts']);
+    },
+  });
+
+  // Update the handleBookmark function:
+  const handleBookmark = (postId) => {
+    if (!isAuthenticated) {
+      loginWithRedirect({
+        appState: { returnTo: window.location.pathname },
+      });
+      return;
+    }
+
+    const post = data?.pages
+      .flatMap((page) => page.data)
+      .find((p) => p._id === postId);
+
+    if (post) {
+      bookmarkMutation.mutate({
+        postId,
+        isBookmarked: post.bookmarkedBy?.includes(user?.sub), // Fix: Check current user's ID
+      });
     }
   };
 
-  useEffect(() => {
-    fetchPosts(page);
-  }, [page]);
+  if (status === "loading") return <Loader />;
+  if (status === "error") return <div>Error loading posts</div>;
 
-  const handleSearchChange = (e) => {
-    setSearchText(e.target.value);
-
-    const searchResults = allPosts.filter(
-      (item) =>
-        item.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
-        item.prompt.toLowerCase().includes(e.target.value.toLowerCase())
+  const filteredPosts = data?.pages
+    .flatMap((page) => page.data)
+    .filter((post) =>
+      searchText
+        ? post.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        post.prompt.toLowerCase().includes(searchText.toLowerCase())
+        : true
     );
 
-    setSearchedResults(searchResults);
-  };
-
+  // Add this useEffect for infinite scroll
   const handleScroll = useCallback(() => {
     if (
-      window.innerHeight + document.documentElement.scrollTop >=
-      document.documentElement.offsetHeight - 100 &&
-      hasMore &&
-      !loading
+      window.innerHeight + document.documentElement.scrollTop
+      >= document.documentElement.offsetHeight - 100 && // Load more when 100px from bottom
+      hasNextPage &&
+      !isFetchingNextPage
     ) {
-      setPage((prevPage) => prevPage + 1);
+      fetchNextPage();
     }
-  }, [hasMore, loading]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
@@ -96,66 +170,91 @@ const Home = () => {
   }, [handleScroll]);
 
   return (
-    <section
-      className="mt-3 max-w-7xl mx-auto p-8 
-  bg-lightBg dark:bg-darkBg 
-  text-lightText dark:text-darkText 
-  rounded-lg shadow-md transition-colors duration-300 ease-in-out"
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="max-w-7xl mx-auto"
     >
-      <div>
-        <h1 className="font-extrabold text-lightText dark:text-darkText text-[32px]">
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="font-extrabold text-[#222328] dark:text-white text-[32px]">
           The Community Showcase
         </h1>
-        <p className="mt-2 text-lightText dark:text-darkText text-[16px] max-w-[500px]">
-          Browse through the image of imaginative images generated by AI
+        <p className="mt-2 text-[#666e75] dark:text-gray-400 text-[16px] max-w-[500px]">
+          Browse through a collection of visually stunning images
+          built with your imagination
         </p>
-      </div>
+      </motion.div>
 
-      <div className="mt-16">
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="mt-16"
+      >
         <FormField
           labelName="Search posts"
           type="text"
           name="text"
-          placeholder="Search..."
+          placeholder="Search posts"
           value={searchText}
-          handleChange={handleSearchChange}
-          className="bg-lightInput dark:bg-darkInput text-lightText dark:text-darkText 
-            border border-gray-300 dark:border-gray-700 rounded-lg"
+          handleChange={(e) => setSearchText(e.target.value)}
         />
-      </div>
+      </motion.div>
 
       <div className="mt-10">
-        {loading && page === 1 ? (
-          <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
-            {Array.from({ length: POSTS_PER_PAGE }).map((_, index) => (
-              <SkeletonCard key={index} />
-            ))}
-          </div>
-        ) : (
-          <>
-            {searchText && (
-              <h2 className="font-medium text-[#6b7280] dark:text-[#d1d5db] text-xl mb-3">
-                Showing results for{' '}
-                <span className="text-darkText dark:text-lightText">{searchText}</span>
-              </h2>
-            )}
+        {searchText && (
+          <motion.h2
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="font-medium text-[#666e75] dark:text-gray-400 text-xl mb-3"
+          >
+            Showing results for{" "}
+            <span className="text-[#222328] dark:text-white">{searchText}</span>
+          </motion.h2>
+        )}
 
-            <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
-              {searchText ? (
-                <RenderCards data={searchedResults} title="No search results found" />
-              ) : (
-                <RenderCards data={allPosts} title="No Posts found" />
-              )}
-            </div>
-          </>
-        )}
-        {loading && page > 1 && (
-          <div className="flex justify-center items-center mt-5">
-            <Loader />
-          </div>
-        )}
+        <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
+          <AnimatePresence>
+            {isLoading ? (
+              // Show skeleton cards while loading
+              Array.from({ length: 8 }).map((_, index) => (
+                <motion.div
+                  key={`skeleton-${index}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <SkeletonCard />
+                </motion.div>
+              ))
+            ) : (
+              <RenderCards
+                data={filteredPosts}
+                title="No posts found"
+                onDelete={(id) => deleteMutation.mutate(id)}
+                onBookmark={handleBookmark}
+                user={user}
+              />
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </section>
+
+      {isFetchingNextPage && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-center mt-10"
+        >
+          <Loader />
+        </motion.div>
+      )}
+    </motion.section>
   );
 };
 
