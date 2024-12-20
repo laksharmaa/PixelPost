@@ -1,5 +1,6 @@
 # PixelPost
 ![Thumbnail](https://github.com/user-attachments/assets/b63814ec-3055-4bd1-8464-336617d47be1)
+<img width="960" alt="image" src="https://github.com/user-attachments/assets/702ea664-d709-4f9b-9635-9068c3db45bc" />
 
 > PixelPost is a Community Platform that where users can create, share, and explore AI-generated images. The application uses React for the client-side, Node.js and Express for the server-side, Azure CosmosDB for data storage, and Azure Blob Storage for image storage. Authentication and authorization are handled using Auth0.
 
