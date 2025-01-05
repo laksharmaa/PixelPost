@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import preview from '../assets/preview.png';
 import { getRandomPrompt } from '../utils';
 import { FormField, Loader } from '../components';
-import GenerateButton from '../components/GenerateButton'; // Import new button component
+import GenerateButton from '../components/GenerateButton';
+import CreatePostStepper from '../components/CreatePostStepper';
+import PromptCarousel from '../components/PromptCarousel';
 
 const CreatePost = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
 
   const [form, setForm] = useState({
     name: '',
@@ -19,8 +23,19 @@ const CreatePost = () => {
   const [generatingImg, setGeneratingImg] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Update step based on form progress
+  useEffect(() => {
+    if (form.name) setCurrentStep(2);
+    if (form.prompt) setCurrentStep(3);
+    if (form.photo) setCurrentStep(4);
+  }, [form]);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handlePromptSelect = (selectedPrompt) => {
+    setForm({ ...form, prompt: selectedPrompt });
   };
 
   const generateImage = async () => {
@@ -93,46 +108,63 @@ const CreatePost = () => {
   };
 
   return (
-    <section 
-      className="max-w-7xl mx-auto 
-      bg-lightBg dark:bg-darkBg 
-      text-lightText dark:text-darkText 
-      min-h-screen p-8 rounded-xl 
-      transition-colors duration-300 ease-in-out"
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="max-w-7xl mx-auto bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText min-h-screen p-8 rounded-xl"
     >
-      <div>
-        <h1 className="font-extrabold text-lightText dark:text-darkText text-[32px]">Create</h1>
+      <CreatePostStepper currentStep={currentStep} />
+
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <h1 className="font-extrabold text-[32px]">Create Your AI Art</h1>
         <p className="mt-2 text-[#6b7280] dark:text-[#d1d5db] text-[14px] max-w-[500px]">
-          Create imaginative and visually stunning images generated through AI and share them with the community.
+          Transform your ideas into stunning AI-generated artwork and share them with the community.
         </p>
-      </div>
+      </motion.div>
 
       <form className="mt-16 max-w-3xl" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-5">
+        <motion.div 
+          className="flex flex-col gap-5"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           <FormField
             labelName="Title of your post"
             type="text"
             name="name"
-            placeholder="Title"
+            placeholder="Give your creation a title"
             value={form.name}
             handleChange={handleChange}
-            className="bg-lightInput dark:bg-darkInput text-lightText dark:text-darkText border border-gray-300 dark:border-gray-700 rounded-lg"
           />
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Need inspiration? Try these prompts:
+            </label>
+            <PromptCarousel onSelect={handlePromptSelect} />
+          </div>
 
           <FormField
             labelName="Prompt"
             type="text"
             name="prompt"
-            placeholder="A plush toy robot sitting against a yellow wall"
+            placeholder="Enter your creative prompt here"
             value={form.prompt}
             handleChange={handleChange}
-            isSurpriseMe={true}
+            isSurpriseMe
             handleSurpriseMe={handleSurpriseMe}
-            className="bg-lightInput dark:bg-darkInput text-lightText dark:text-darkText border border-gray-300 dark:border-gray-700 rounded-lg"
           />
 
-          <div 
-            className="relative bg-lightInput dark:bg-darkInput border border-gray-300 dark:border-gray-700 text-lightText dark:text-darkText text-sm rounded-lg w-64 p-3 h-64 flex justify-center items-center"
+          <motion.div 
+            className="relative bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-64 p-3 h-64 flex justify-center items-center"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
           >
             {form.photo ? (
               <img
@@ -149,34 +181,44 @@ const CreatePost = () => {
             )}
 
             {generatingImg && (
-              <div 
-                className="absolute inset-0 z-0 flex justify-center items-center 
-                bg-[rgba(0,0,0,0.5)] dark:bg-[rgba(255,255,255,0.2)] 
-                rounded-lg"
+              <motion.div 
+                className="absolute inset-0 z-0 flex justify-center items-center bg-[rgba(0,0,0,0.5)] rounded-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
               >
                 <Loader />
-              </div>
+              </motion.div>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="mt-5 flex gap-5">
+        <motion.div 
+          className="mt-5 flex gap-5"
+          // whileHover={{ scale: 1.02 }}
+        >
           <GenerateButton onClick={generateImage} generating={generatingImg} />
-        </div>
+        </motion.div>
 
-        <div className="mt-10">
+        <motion.div 
+          className="mt-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
           <p className="mt-2 text-[#6b7280] dark:text-[#d1d5db] text-[14px]">
-            Once you have created the image you want, you can share it with others in the community
+            Once you've created your masterpiece, share it with the community!
           </p>
-          <button
+          <motion.button
             type="submit"
-            className="mt-3 text-white bg-[#6469ff] dark:bg-[#3f48cc] font-medium rounded-md text-sm w-full sm:w-auto px-5 py-2.5 text-center"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="mt-3 text-white bg-[#6469ff] font-medium rounded-md text-sm w-full sm:w-auto px-5 py-2.5 text-center"
           >
             {loading ? "Sharing..." : "Share with the community"}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </form>
-    </section>
+    </motion.section>
   );
 };
 
