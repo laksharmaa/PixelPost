@@ -1,48 +1,21 @@
-// // utils/loginOrCreateUser.js
-// import User from '../mongodb/models/user.js';
-
-// const loginOrCreateUser = async (userId, name, email) => {
-//   try {
-//     // Attempt to find the user in the database
-//     let user = await User.findOne({ userId });
-
-//     if (!user) {
-//       // If user does not exist, create and save a new one
-//       user = new User({ userId, name, email });
-//       await user.save();
-//       console.log('New user created:', user);
-//     }
-
-//     return user;
-//   } catch (error) {
-//     if (error.code === 11000) {
-//       // Log only a brief message without duplicate details for clarity
-//       console.log(`User ${userId} already exists, skipping creation`);
-//       // Fetch and return the existing user
-//       return await User.findOne({ userId });
-//     } else {
-//       // Log any other unexpected error
-//       console.error('Unexpected error in user login or creation:', error);
-//       throw error;
-//     }
-//   }
-// };
-
-// export default loginOrCreateUser;
-
 import User from "../mongodb/models/user.js";
+import Post from '../mongodb/models/post.js';
 
 const loginOrCreateUser = async (userId, name, email) => {
   try {
     // Attempt to find the user in the database
     let user = await User.findOne({ userId });
+    
+    // Get the actual post count
+    const actualPostCount = await Post.countDocuments({ userId });
 
     if (!user) {
       // If user does not exist, create and save a new one
       user = new User({
         userId,
-        name: name || "Unknown User", // Default name if not provided
-        email: email || "unknown@example.com", // Default email if not provided
+        name: name || "Unknown User",
+        email: email || "unknown@example.com",
+        postCount: actualPostCount
       });
       await user.save();
       console.log("New user created:", user);
@@ -60,23 +33,24 @@ const loginOrCreateUser = async (userId, name, email) => {
         updated = true;
       }
 
+      // Update post count if it's different
+      if (user.postCount !== actualPostCount) {
+        user.postCount = actualPostCount;
+        updated = true;
+      }
+
       if (updated) {
         await user.save();
-        console.log("User updated with missing fields:", user);
-      } else {
-        console.log("User already exists with complete details:", user);
+        console.log("User updated:", user);
       }
     }
 
     return user;
   } catch (error) {
     if (error.code === 11000) {
-      // Log only a brief message without duplicate details for clarity
       console.log(`User ${userId} already exists, skipping creation`);
-      // Fetch and return the existing user
       return await User.findOne({ userId });
     } else {
-      // Log any other unexpected error
       console.error("Unexpected error in user login or creation:", error);
       throw error;
     }

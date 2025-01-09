@@ -10,14 +10,20 @@ import { deleteImage } from '../services/azureBlobService.js';
 dotenv.config();
 const router = express.Router();
 
-// CREATE A POST
+// In postRoutes.js - CREATE A POST route
 router.post('/', async (req, res) => {
   try {
     const { name, prompt, photo, userId, email } = req.body;
-    await loginOrCreateUser(userId, name, email);
-
+    
+    // Create the post
     const photoUrl = await uploadImage(photo, `post-${Date.now()}.jpeg`);
     const newPost = await Post.create({ name, prompt, photo: photoUrl, userId, likedBy: [] });
+
+    // Update user's post count
+    await User.findOneAndUpdate(
+      { userId },
+      { $inc: { postCount: 1 } }
+    );
 
     res.status(201).json({ success: true, data: newPost });
   } catch (error) {

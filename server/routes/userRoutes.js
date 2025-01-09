@@ -4,35 +4,30 @@ import loginOrCreateUser from "../utils/loginOrCreateUser.js";  // Import loginO
 
 const router = express.Router();
 
-// GET USER INFO BY USER ID
+/// userRoutes.js
 router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-
-    // Decode the userId to handle special characters like '|'
     const decodedUserId = decodeURIComponent(userId);
-    console.log("Fetching user info for userId:", decodedUserId);
-
-    // Check if the user exists or create one if they don't
+    
     const user = await loginOrCreateUser(decodedUserId, req.auth.name, req.auth.email);
 
-    // Add follower and following counts
-    const followersCount = user.followers.length;
-    const followingCount = user.following.length;
+    // Create a userInfo object with the required counts
+    const userInfo = {
+      followers: user.followers,
+      following: user.following,
+      postCount: user.postCount,
+      name: user.name,
+      email: user.email
+    };
 
-    // Return the user info along with the follower and following counts
     res.status(200).json({
       success: true,
-      data: {
-        ...user.toObject(),
-        followersCount,
-        followingCount,
-      },
+      data: userInfo
     });
   } catch (error) {
     console.error("Error fetching user info:", error);
     res.status(500).json({ success: false, message: "Error fetching user info" });
   }
 });
-
 export default router;
