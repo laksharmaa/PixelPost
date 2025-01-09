@@ -19,7 +19,7 @@ const SkeletonCard = () => {
       className={`shadow-lg rounded-xl ${randomColorClass} animate-pulse group relative shadow-card transition-all duration-300 hover:scale-[1.02] card`}
     >
       {/* Card Body */}
-      <div className="w-full h-48 rounded-lg mb-4">
+      <div className="w-full h-64 rounded-lg">
          {/* Optional Loading Indicator */}
       <div className="absolute bottom-2 right-2 opacity-50 group-hover:opacity-70 transition-opacity">
         <svg 
