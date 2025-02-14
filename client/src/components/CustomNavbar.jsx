@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";  // Add useEffect here
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import {
@@ -27,6 +27,33 @@ function CustomNavbar() {
     { path: "/profile", icon: UserCircleIcon, label: "Profile", authRequired: true },
   ];
 
+  // Move repeated logic to a separate function
+  const renderDesktopIcon = (item) => {
+    if (item.authRequired && !isAuthenticated) return null;
+    const Icon = item.icon;
+    const isActive = location.pathname === item.path;
+
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        className={`group relative p-2 rounded-xl flex items-center justify-center
+          ${isActive ? 'bg-blue-500 text-white' : 'hover:bg-blue-500/10'}`}
+      >
+        <Icon className="w-5 h-5" />
+        <span
+          className={`absolute left-full ml-2 px-2 py-1 text-sm rounded-md shadow-md
+            transition-opacity duration-200 opacity-0 group-hover:opacity-100
+            ${isDarkMode 
+              ? 'bg-gray-700 text-white' 
+              : 'bg-gray-900 text-white'}`}
+        >
+          {item.label}
+        </span>
+      </Link>
+    );
+  };
+
   // Desktop Floating Sidebar
   const FloatingSidebar = () => (
     <div className="hidden lg:block fixed left-6 top-1/2 -translate-y-1/2 z-50">
@@ -39,28 +66,12 @@ function CustomNavbar() {
         </Link>
 
         <div className="flex flex-col gap-4">
-          {navItems.map((item) => {
-            if (item.authRequired && !isAuthenticated) return null;
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`p-2 rounded-xl flex items-center justify-center
-                  ${isActive ? 'bg-blue-500 text-white' : 'hover:bg-blue-500/10'}`}
-              >
-                <Icon className="w-5 h-5" />
-              </Link>
-            );
-          })}
+          {navItems.map(renderDesktopIcon)}
         </div>
 
         <div className="mt-4 flex flex-col gap-4">
           <DarkModeToggle />
           {isAuthenticated ? (
-            // In FloatingSidebar component
             <UserProfileDropdown
               userName={user?.name}
               userEmail={user?.email}
