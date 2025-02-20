@@ -11,6 +11,7 @@ import AccountCircleSharpIcon from "@mui/icons-material/AccountCircleSharp";
 import { motion } from "framer-motion";
 import { BookmarkIcon as BookmarkOutline } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolid } from "@heroicons/react/24/solid";
+import ReactionButton from '../components/ReactionButton';
 
 const fetchPost = async (id) => {
   const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}`);
@@ -30,6 +31,7 @@ const PostDetail = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [viewCounted, setViewCounted] = useState(false);
+
 
   // Fetch Post Query
   const postQuery = useQuery({
@@ -135,6 +137,35 @@ const PostDetail = () => {
     trackView();
   }, [id, viewCounted]);
 
+  const handleReact = async (postId, reactionType) => {
+    if (!user || !isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}/react`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: user.sub,
+          reactionType
+        }),
+      });
+
+      if (response.ok) {
+        const updatedPost = await response.json();
+        // Update your posts state here
+        setPosts(posts.map(p => p._id === postId ? updatedPost.data : p));
+      }
+    } catch (error) {
+      console.error('Error reacting to post:', error);
+    }
+  };
+
   const handleLike = () => {
     if (!isAuthenticated) {
       loginWithRedirect();
@@ -163,7 +194,7 @@ const PostDetail = () => {
     };
     checkBookmarkStatus();
   }, [id, isAuthenticated, user?.sub]);
-  
+
   // Update the bookmark mutation
   const bookmarkMutation = useMutation({
     mutationFn: async () => {
@@ -172,9 +203,8 @@ const PostDetail = () => {
         return;
       }
       const token = await getAccessTokenSilently();
-      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${
-        isBookmarked ? 'unbookmark' : 'bookmark'
-      }`;
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${isBookmarked ? 'unbookmark' : 'bookmark'
+        }`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -258,14 +288,11 @@ const PostDetail = () => {
               {/* Like, Comment & View Count Section */}
               <div className="flex items-center justify-between text-gray-500 dark:text-gray-300">
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleLike}
-                    disabled={isLiking}
-                    className="flex justify-center items-center gap-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full p-1"
-                  >
-                    {hasLiked ? <FavoriteIcon style={{ color: "red" }} /> : <FavoriteBorderIcon />}
-                    <span>{post.likes}</span>
-                  </button>
+                  <ReactionButton
+                    post={post}
+                    userId={user?.sub} // Use optional chaining here
+                    onReact={handleReact}
+                  />
                   <button
                     onClick={() => setShowComments(!showComments)}
                     className="flex justify-center items-center gap-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full p-1"
