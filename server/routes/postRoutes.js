@@ -352,6 +352,53 @@ router.get('/bookmarks/:userId', async (req, res) => {
   }
 });
 
+// Reaction handling route
+router.post('/:id/react', async (req, res) => {
+  try {
+    const { userId, reactionType } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID is required' });
+    }
 
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
+    const existingReactionIndex = post.reactedBy.findIndex(r => r.username === userId);
+    let updateQuery = {};
+
+    if (existingReactionIndex !== -1) {
+      const prevReaction = post.reactedBy[existingReactionIndex].reactionType;
+
+      if (!reactionType || prevReaction === reactionType) {
+        // ✅ Remove reaction if same one is clicked again
+        post.reactedBy.splice(existingReactionIndex, 1);
+        post.reactions[prevReaction] = Math.max(0, (post.reactions[prevReaction] || 0) - 1);
+        post.totalReactions = Math.max(0, post.totalReactions - 1);
+      } else {
+        // ✅ Change reaction type
+        post.reactedBy[existingReactionIndex].reactionType = reactionType;
+        post.reactions[prevReaction] = Math.max(0, (post.reactions[prevReaction] || 0) - 1);
+        post.reactions[reactionType] = (post.reactions[reactionType] || 0) + 1;
+      }
+    } else {
+      // ✅ Add new reaction
+      post.reactedBy.push({ username: userId, reactionType });
+      post.reactions[reactionType] = (post.reactions[reactionType] || 0) + 1;
+      post.totalReactions += 1;
+    }
+
+    // ✅ Save updated post
+    await post.save();
+    
+    res.status(200).json({ success: true, data: post });
+  } catch (error) {
+    console.error('Error handling reaction:', error);
+    res.status(500).json({ success: false, message: 'Server error during reaction operation' });
+  }
+});
 
 export default router;
+

@@ -40,7 +40,25 @@ const postSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }] // Array of comment references
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }], // Array of comment references
+    // Reactions
+    reactions: {
+        like: { type: Number, default: 0 },
+        love: { type: Number, default: 0 },
+        haha: { type: Number, default: 0 },
+        wow: { type: Number, default: 0 },
+        fire: { type: Number, default: 0 }
+    },
+    
+    reactedBy: [{
+        username: String,  // Username of the person who reacted
+        reactionType: {
+            type: String,
+            enum: ['like', 'love', 'haha', 'wow', 'fire']
+        }
+    }],
+
+    totalReactions: { type: Number, default: 0 } 
 });
 
 //index for sorting posts by createdAt
