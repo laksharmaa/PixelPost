@@ -292,6 +292,8 @@ const PostDetail = () => {
                     post={post}
                     userId={user?.sub} // Use optional chaining here
                     onReact={handleReact}
+                    isAuthenticated={isAuthenticated}
+                    loginWithRedirect={loginWithRedirect}
                   />
                   <button
                     onClick={() => setShowComments(!showComments)}

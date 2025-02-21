@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
 import likeAnimation from "../assets/lottie/like.json";
@@ -37,6 +38,7 @@ const reactions = {
 };
 
 const ReactionButton = ({ post, userId }) => {
+  const { isAuthenticated, user, loginWithRedirect, getAccessTokenSilently } = useAuth0();
   const [hovering, setHovering] = useState(false);
   const [userReaction, setUserReaction] = useState(() => {
     const foundReaction = post.reactedBy.find((r) => r.username === userId);
@@ -54,7 +56,14 @@ const ReactionButton = ({ post, userId }) => {
   };
 
   const handleReact = async (reactionType) => {
+
+    if (!isAuthenticated) {
+      loginWithRedirect(); // Redirect to login if not authenticated
+      return;
+    }
+
     try {
+      const token = await getAccessTokenSilently();
       const newReaction = userReaction === reactionType ? null : reactionType;
 
       // Optimistically update UI
@@ -74,7 +83,10 @@ const ReactionButton = ({ post, userId }) => {
 
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${post._id}/react`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ userId, reactionType: newReaction }),
       });
 
