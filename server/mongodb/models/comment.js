@@ -11,6 +11,10 @@ const commentSchema = new mongoose.Schema({
         type: String, // Reference to the user's ID
         required: true,
     },
+    username: {// New field for storing the username
+        type: String,
+        required: true,
+    },
     comment: {
         type: String,
         required: true,

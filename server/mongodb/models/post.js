@@ -18,6 +18,10 @@ const postSchema = new mongoose.Schema({
         type: String, // Reference to the user who created the post
         required: true,
     },
+    username: { // New field for storing the username
+        type: String,
+        required: true,
+    },
     likes: {
         type: Number, default: 0
     },
