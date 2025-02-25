@@ -11,17 +11,20 @@ import AccountCircleSharpIcon from "@mui/icons-material/AccountCircleSharp";
 import { motion } from "framer-motion";
 import { BookmarkIcon as BookmarkOutline } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolid } from "@heroicons/react/24/solid";
-import ReactionButton from '../components/ReactionButton';
+import ReactionButton from "../components/ReactionButton";
 
 const fetchPost = async (id) => {
-  const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}`);
+  const response = await fetch(
+    `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}`
+  );
   if (!response.ok) throw new Error("Failed to fetch post");
   return response.json();
 };
 
 const PostDetail = () => {
   const { id } = useParams();
-  const { isAuthenticated, getAccessTokenSilently, user, loginWithRedirect } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently, user, loginWithRedirect } =
+    useAuth0();
   const queryClient = useQueryClient();
 
   // Hooks for managing states
@@ -31,7 +34,6 @@ const PostDetail = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [viewCounted, setViewCounted] = useState(false);
-
 
   // Fetch Post Query
   const postQuery = useQuery({
@@ -44,7 +46,9 @@ const PostDetail = () => {
   const likeMutation = useMutation({
     mutationFn: async ({ liked }) => {
       const token = await getAccessTokenSilently();
-      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${liked ? "unlike" : "like"}`;
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${
+        liked ? "unlike" : "like"
+      }`;
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -83,14 +87,17 @@ const PostDetail = () => {
   const commentMutation = useMutation({
     mutationFn: async (commentData) => {
       const token = await getAccessTokenSilently();
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/comment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(commentData),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/comment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(commentData),
+        }
+      );
       if (!response.ok) throw new Error("Failed to add comment");
       return response.json();
     },
@@ -100,11 +107,14 @@ const PostDetail = () => {
         ...old,
         data: {
           ...old.data,
-          comments: [...(old.data.comments || []), {
-            ...newComment,
-            _id: Date.now().toString(),
-            createdAt: new Date().toISOString(),
-          }],
+          comments: [
+            ...(old.data.comments || []),
+            {
+              ...newComment,
+              _id: Date.now().toString(),
+              createdAt: new Date().toISOString(),
+            },
+          ],
           commentCount: (old.data.commentCount || 0) + 1,
         },
       }));
@@ -124,10 +134,13 @@ const PostDetail = () => {
     const trackView = async () => {
       if (!viewCounted) {
         try {
-          const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/view`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          });
+          const response = await fetch(
+            `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/view`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
           if (response.ok) setViewCounted(true);
         } catch (error) {
           console.error("Failed to track view:", error);
@@ -144,25 +157,28 @@ const PostDetail = () => {
     }
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}/react`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          userId: user.sub,
-          reactionType
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}/react`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId: user.sub,
+            reactionType,
+          }),
+        }
+      );
 
       if (response.ok) {
         const updatedPost = await response.json();
         // Update your posts state here
-        setPosts(posts.map(p => p._id === postId ? updatedPost.data : p));
+        setPosts(posts.map((p) => (p._id === postId ? updatedPost.data : p)));
       }
     } catch (error) {
-      console.error('Error reacting to post:', error);
+      console.error("Error reacting to post:", error);
     }
   };
 
@@ -185,10 +201,10 @@ const PostDetail = () => {
           );
           if (response.ok) {
             const data = await response.json();
-            setIsBookmarked(data.data.some(bookmark => bookmark._id === id));
+            setIsBookmarked(data.data.some((bookmark) => bookmark._id === id));
           }
         } catch (error) {
-          console.error('Failed to check bookmark status:', error);
+          console.error("Failed to check bookmark status:", error);
         }
       }
     };
@@ -203,23 +219,24 @@ const PostDetail = () => {
         return;
       }
       const token = await getAccessTokenSilently();
-      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${isBookmarked ? 'unbookmark' : 'bookmark'
-        }`;
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/api/v1/post/${id}/${
+        isBookmarked ? "unbookmark" : "bookmark"
+      }`;
       const response = await fetch(endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ userId: user?.sub }),
       });
-      if (!response.ok) throw new Error('Failed to toggle bookmark');
+      if (!response.ok) throw new Error("Failed to toggle bookmark");
       return response.json();
     },
     onSuccess: () => {
       setIsBookmarked(!isBookmarked);
-      queryClient.invalidateQueries(['bookmarks']);
-      queryClient.invalidateQueries(['post', id]);
+      queryClient.invalidateQueries(["bookmarks"]);
+      queryClient.invalidateQueries(["post", id]);
     },
   });
 
@@ -268,22 +285,28 @@ const PostDetail = () => {
             </div>
             {/* Post Content */}
             <div className="md:w-1/3 py-10 ml-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <AccountCircleSharpIcon className="w-12 h-12 bg-gray-300 rounded-full text-gray-800 dark:text-white" />
-                  <div>
-                    <p className="text-gray-800 dark:text-white font-semibold">{post.name}</p>
-                    <p className="text-gray-500 text-sm dark:text-gray-300">
-                      Posted {new Date(post.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
+              {/* User Info */}
+              <div className="flex items-center space-x-2 mb-4">
+                <AccountCircleSharpIcon className="w-8 h-8 bg-gray-300 rounded-full text-gray-800 dark:text-white" />
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {post.username}
+                </p>
               </div>
+
+              {/* Post Title */}
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+                {post.name}
+              </h1>
 
               {/* Post Prompt */}
               <div className="mb-4">
                 <p className="text-gray-800 dark:text-white">{post.prompt}</p>
               </div>
+
+              {/* Creation Date */}
+              <p className="text-gray-500 text-sm dark:text-gray-300 mb-4">
+                Posted {new Date(post.createdAt).toLocaleString()}
+              </p>
 
               {/* Like, Comment & View Count Section */}
               <div className="flex items-center justify-between text-gray-500 dark:text-gray-300">
@@ -318,13 +341,16 @@ const PostDetail = () => {
                 ) : (
                   <BookmarkOutline className="w-5 h-5" />
                 )}
-                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                {isBookmarked ? "Bookmarked" : "Bookmark"}
               </button>
 
               {/* Comment Input */}
               {showComments && (
                 <div>
-                  <form onSubmit={handleCommentSubmit} className="flex items-center space-x-3 mt-4">
+                  <form
+                    onSubmit={handleCommentSubmit}
+                    className="flex items-center space-x-3 mt-4"
+                  >
                     <textarea
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
@@ -335,7 +361,11 @@ const PostDetail = () => {
                     <button
                       type="submit"
                       disabled={isSubmittingComment}
-                      className={`flex justify-center items-center p-2 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-full transition duration-300 ${isSubmittingComment ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`flex justify-center items-center p-2 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-full transition duration-300 ${
+                        isSubmittingComment
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -361,19 +391,26 @@ const PostDetail = () => {
                             <div key={index} className="border-b p-2">
                               <div className="flex items-center mb-2">
                                 <AccountCircleSharpIcon className="w-8 h-8 bg-gray-300 rounded-full" />
-                                <p className="ml-3 font-semibold text-gray-800 dark:text-white">User</p>
+                                <p className="ml-3 font-semibold text-gray-800 dark:text-white">
+                                  User
+                                </p>
                               </div>
-                              <p className="text-gray-400 text-xs">{new Date(comment.createdAt).toLocaleString()}</p>
-                              <p className="text-gray-600 dark:text-gray-300">{comment.comment}</p>
+                              <p className="text-gray-400 text-xs">
+                                {new Date(comment.createdAt).toLocaleString()}
+                              </p>
+                              <p className="text-gray-600 dark:text-gray-300">
+                                {comment.comment}
+                              </p>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="mt-6 text-center text-gray-600 dark:text-gray-300">No comments</p>
+                        <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
+                          No comments
+                        </p>
                       )
                     ) : null}
                   </div>
-
                 </div>
               )}
             </div>
