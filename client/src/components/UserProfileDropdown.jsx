@@ -1,17 +1,18 @@
 // UserProfileDropdown.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserCircleIcon } from "@heroicons/react/24/outline";
+import { FaUser, FaTrophy, FaSignOutAlt, FaSun, FaMoon } from "react-icons/fa";
 
-const UserProfileDropdown = ({ 
-  userName, 
-  userEmail, 
-  avatarSrc, 
-  onLogout, 
+const UserProfileDropdown = ({
+  userName,
+  userEmail,
+  username,
+  avatarSrc,
+  onLogout,
   includeProfileOption,
   isDarkMode,
   toggleDarkMode,
-  isMobile = false
+  isMobile = false,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -24,12 +25,12 @@ const UserProfileDropdown = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" style={{ margin: "auto" }} ref={dropdownRef}>
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="w-8 h-8 rounded-full"
@@ -42,16 +43,26 @@ const UserProfileDropdown = ({
       </button>
 
       {isDropdownOpen && (
-        <div className={`absolute ${isMobile ? 'bottom-full' : 'bottom-full'} 
-          left-14  w-50 rounded-2xl shadow-xl overflow-hidden
-          ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+        <div
+          className={`absolute ${isMobile ? "bottom-full" : "bottom-full"} 
+          left-14 w-64 rounded-2xl shadow-xl overflow-hidden
+          ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
         >
           <div className="p-3 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
-              <img src={avatarSrc} alt="profile" className="w-10 h-10 rounded-full" />
+              <img
+                src={avatarSrc}
+                alt="profile"
+                className="w-10 h-10 rounded-full"
+              />
               <div>
                 <div className="font-medium">{userName}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">{userEmail}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  @{username}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {userEmail}
+                </div>
               </div>
             </div>
           </div>
@@ -65,29 +76,38 @@ const UserProfileDropdown = ({
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                <UserCircleIcon className="w-5 h-5" />
+                <FaUser className="w-5 h-5" />
                 My Profile
               </button>
             )}
-            
-            {isMobile && (
+
+            <button
+              onClick={() => {
+                navigate("/my-contest-entries");
+                setIsDropdownOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <FaTrophy className="w-5 h-5" />
+              My Contest Entries
+            </button>
+
+            {toggleDarkMode && (
               <button
-                onClick={toggleDarkMode}
+                onClick={() => {
+                  toggleDarkMode();
+                  setIsDropdownOpen(false);
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 {isDarkMode ? (
                   <>
-                    <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="4"/>
-                      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-                    </svg>
+                    <FaSun className="w-5 h-5" />
                     Light Mode
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-                    </svg>
+                    <FaMoon className="w-5 h-5" />
                     Dark Mode
                   </>
                 )}
@@ -101,11 +121,7 @@ const UserProfileDropdown = ({
               }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500"
             >
-              <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
+              <FaSignOutAlt className="w-5 h-5" />
               Sign Out
             </button>
           </div>

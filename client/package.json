@@ -18,7 +18,7 @@
     "@mui/icons-material": "^6.1.1",
     "@mui/material": "^6.1.1",
     "@tailwindcss/aspect-ratio": "^0.4.2",
-    "@tanstack/react-query": "^5.62.0",
+    "@tanstack/react-query": "^5.66.10",
     "client": "file:",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.14.4",
