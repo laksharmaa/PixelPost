@@ -86,7 +86,7 @@ function CustomNavbar() {
               onClick={() => loginWithPopup({ connection: "google-oauth2" })}
               className="p-2 rounded-xl hover:bg-blue-500/10"
             >
-              <UserCircleIcon className="w-5 h-5" />
+              <UserCircleIcon className="w-7 h-7" />
             </button>
           )}
         </div>
@@ -129,7 +129,7 @@ function CustomNavbar() {
             </button>
 
             {showMobileDropdown && (
-              <div className="absolute bottom-full right-0 mb-2 w-64">
+              <div className="absolute bottom-full right-0 mb-4 w-64">
                 <div className={`rounded-lg shadow-lg overflow-hidden
                   ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
                 >

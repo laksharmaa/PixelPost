@@ -29,7 +29,7 @@ const UserProfileDropdown = ({
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="flex justify-center" ref={dropdownRef}>
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="w-8 h-8 rounded-full"
@@ -42,8 +42,8 @@ const UserProfileDropdown = ({
       </button>
 
       {isDropdownOpen && (
-        <div className={`absolute ${isMobile ? 'bottom-full' : 'bottom-full'} 
-          left-14  w-50 rounded-2xl shadow-xl overflow-hidden
+        <div className={`fixed ml-2 bottom-1
+          left-14  w-max rounded-2xl shadow-xl overflow-hidden
           ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
         >
           <div className="p-3 border-b border-gray-200 dark:border-gray-700">
