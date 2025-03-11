@@ -17,7 +17,7 @@ router.post('/', async (req, res) => {
     
     // Create the post
     const photoUrl = await uploadImage(photo, `post-${Date.now()}.jpeg`);
-    const newPost = await Post.create({ name, prompt, photo: photoUrl, userId, likedBy: [] });
+    const newPost = await Post.create({ name, prompt, photo: photoUrl, userId, username:userId, likedBy: [] });
 
     // Update user's post count
     await User.findOneAndUpdate(

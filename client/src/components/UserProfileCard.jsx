@@ -1,62 +1,137 @@
-import React from "react";
-import { FaUserFriends, FaImage } from "react-icons/fa";
+import { useState } from "react";
+import { FaUserFriends, FaImage, FaMoneyBillWave, FaTrophy, FaCrown } from "react-icons/fa";
 import UserProfileCardSkeleton from "./UserProfileCardSkeleton";
+import {UserCircleIcon} from "@heroicons/react/24/outline";
 
 const UserProfileCard = ({ userInfo, auth0User }) => {
+
+  const [flipped, setFlipped] = useState(false);
+
   if (!userInfo || !auth0User) {
     return <UserProfileCardSkeleton />;
   }
 
-  const { followers, following, postCount } = userInfo;
+  const { followers, following, postCount, credits } = userInfo;
   const { name, picture } = auth0User;
 
   return (
     <div className="flex justify-center items-center p-4 drop-shadow-2xl">
-      <div className="relative border-b-4 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl">
-        <div className="relative rounded-xl w-full h-auto p-6 flex flex-col sm:flex-row items-center sm:items-start">
-          {/* Profile Picture */}
-          <div className="flex-shrink-0 mb-4 sm:mb-0 sm:w-1/4 sm:h-full">
-            <img
-              src={picture}
-              alt="Profile"
-              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-purple-500 shadow-md object-cover transition-transform hover:scale-110"
-              onError={(e) => {
-                e.target.src = "https://via.placeholder.com/150?text=No+Image";
-              }}
-            />
-          </div>
+      <style>
+        {`
+          .card {
+            perspective: 1000px;
+            
+          }
+          .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+          }
+          .card-front{
+            position: absolute;
+            backface-visibility: hidden;
+          }
+          .card-back {
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+          }
+          .card.flipped .card-inner {
+            transform: rotateY(180deg);
+          }
+        `}
+      </style>
+      <div className={`w-full max-w-2xl card ${flipped ? 'flipped' : ''}`}>
 
-          {/* User Info */}
-          <div className="mt-4 sm:mt-0 sm:ml-8 flex-1 text-center sm:text-left">
-            <h2 className="text-xl sm:text-3xl text-purple-700 font-bold break-words dark:text-white">{name}</h2>
+        <div className="card-inner">
 
-            {/* Metrics */}
-            <div className="flex justify-center sm:justify-start gap-6 sm:gap-8 mt-6 flex-wrap">
-              <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 transition-transform hover:scale-105">
-                <div className="flex items-center gap-1">
-                  <FaUserFriends className="text-blue-500 dark:text-blue-400 text-lg sm:text-xl" />
-                  <span className="font-bold">{followers ? followers.length : 0}</span>
-                </div>
-                <span className="text-xs sm:text-sm">Followers</span>
+          <div className="card-front relative border-b-4 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl">
+            <FaTrophy className="absolute top-4 right-4 z-10 text-yellow-500 dark:text-yellow-400 text-lg sm:text-xl" onClick={() => setFlipped(!flipped)} />
+            <div className="relative rounded-xl w-full h-auto p-6 flex flex-col sm:flex-row items-center sm:items-start">
+              {/* Profile Picture */}
+              <div className="flex-shrink-0 mb-4 sm:mb-0 sm:w-1/4 sm:h-full">
+                <img
+                  src={picture}
+                  alt="Profile"
+                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-purple-500 shadow-md object-cover transition-transform hover:scale-110"
+                  onError={(e) => {
+                    e.target.src = "https://via.placeholder.com/150?text=No+Image";
+                  }}
+                />
               </div>
 
-              <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 transition-transform hover:scale-105">
-                <div className="flex items-center gap-1">
-                  <FaUserFriends className="text-green-500 dark:text-green-400 text-lg sm:text-xl" />
-                  <span className="font-bold">{following ? following.length : 0}</span>
-                </div>
-                <span className="text-xs sm:text-sm">Following</span>
-              </div>
+              {/* User Info */}
+              <div className="mt-4 sm:mt-0 sm:ml-8 flex-1 text-center sm:text-left">
+                <h2 className="text-xl sm:text-3xl text-purple-700 font-bold break-words dark:text-white">{name}</h2>
 
-              <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 transition-transform hover:scale-105">
-                <div className="flex items-center gap-1">
-                  <FaImage className="text-purple-500 dark:text-purple-400 text-lg sm:text-xl" />
-                  <span className="font-bold">{postCount || 0}</span>
+                {/* Metrics */}
+                <div className="flex justify-center sm:justify-start gap-6 sm:gap-8 mt-6 flex-wrap">
+                  <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-transform hover:scale-105">
+                    <div className="flex items-center gap-1">
+                      <FaUserFriends className="text-blue-500 dark:text-blue-400 text-lg sm:text-xl" />
+                      <span className="font-bold">{followers ? followers.length : 0}</span>
+                    </div>
+                    <span className="text-xs sm:text-sm">Followers</span>
+                  </div>
+
+                  <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 transition-transform hover:scale-105">
+                    <div className="flex items-center gap-1">
+                      <FaUserFriends className="text-green-500 dark:text-green-400 text-lg sm:text-xl" />
+                      <span className="font-bold">{following ? following.length : 0}</span>
+                    </div>
+                    <span className="text-xs sm:text-sm">Following</span>
+                  </div>
+
+                  <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 transition-transform hover:scale-105">
+                    <div className="flex items-center gap-1">
+                      <FaImage className="text-purple-500 dark:text-purple-400 text-lg sm:text-xl" />
+                      <span className="font-bold">{postCount || 0}</span>
+                    </div>
+                    <span className="text-xs sm:text-sm">Posts</span>
+                  </div>
+                  {auth0User.username === userInfo.username &&
+                    <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-transform hover:scale-105">
+                      <div className="flex items-center gap-1">
+                        <FaMoneyBillWave className="text-yellow-500 dark:text-yellow-400 text-lg sm:text-xl" />
+                        <span className="font-bold">{postCount || 0}</span>
+                      </div>
+                      <span className="text-xs sm:text-sm">Credits</span>
+                    </div>}
                 </div>
-                <span className="text-xs sm:text-sm">Posts</span>
               </div>
             </div>
           </div>
+
+          {/* back start */}
+          <div className="card-back fixed flex justify-center items-center bg-gray-200 dark:bg-gray-700 rounded-2xl w-full max-w-2xl">
+            {auth0User.picture ?
+            <img src={auth0User.picture} alt="Profile" className="absolute top-4 right-4 w-7 h-7 rounded-full z-10" onClick={() => setFlipped(!flipped)} /> :
+            <UserCircleIcon className="absolute top-4 right-4 z-10 text-black dark:text-white text-lg sm:text-xl w-7 h-7" onClick={() => setFlipped(!flipped)} />}
+            <div className="relative rounded-xl w-full h-auto p-6 flex flex-col sm:flex-row items-center sm:items-start">
+              {/* Profile Picture */}
+              <div className="flex-shrink-0 mb-4 sm:mb-0 sm:w-1/4 sm:h-full">
+                <FaTrophy className="text-yellow-500 dark:text-yellow-400 text-lg sm:text-xl size-28" />
+              </div>
+
+              {/* User Info */}
+              <div className="mt-4 sm:mt-0 sm:ml-8 flex-1 text-center sm:text-left">
+                <h2 className="text-xl sm:text-3xl text-purple-700 font-bold break-words dark:text-white">Contest Info</h2>
+
+                {/* Metrics */}
+                <div className="flex justify-center sm:justify-start gap-6 sm:gap-8 mt-6 flex-wrap">
+                  <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-transform hover:scale-105">
+                    <div className="flex items-center gap-1">
+                      <FaCrown className="text-red-500 dark:text-red-400 text-lg sm:text-xl" />
+                      <span className="font-bold">{userInfo.contest?? 0 }</span>
+                    </div>
+                    <span className="text-xs sm:text-sm">Contest Won</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* back end */}
         </div>
       </div>
     </div>

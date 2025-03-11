@@ -17,6 +17,13 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
   },
+  profilePicture: {
+    type: String,
+  },
+  credits : {
+    type: Number,
+    default: 0,
+  },
   imageGenerationCount: {
     type: Number,
     default: 0,
