@@ -15,6 +15,7 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import Loader from "../../components/Loader";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const ContestDetail = () => {
   const { id } = useParams();
@@ -27,6 +28,11 @@ const ContestDetail = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [userPosts, setUserPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    entryId: null,
+    contestId: null,
+  });
 
   // Fetch contest details
   const {
@@ -199,7 +205,9 @@ const ContestDetail = () => {
     mutationFn: async ({ contestId, entryId }) => {
       const token = await getAccessTokenSilently();
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/contests/${contestId}/entries/${entryId}`,
+        `${
+          import.meta.env.VITE_BASE_URL
+        }/api/v1/contests/${contestId}/entries/${entryId}`,
         {
           method: "DELETE",
           headers: {
@@ -207,22 +215,34 @@ const ContestDetail = () => {
           },
         }
       );
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to remove entry");
       }
-  
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["contest", id]);
     },
   });
-  
+
   // Add this handler function inside the component
   const handleRemoveEntry = (contestId, entryId) => {
-    if (confirm("Are you sure you want to remove this entry?")) {
+    setConfirmDialog({
+      isOpen: true,
+      entryId,
+      contestId,
+      title: "Remove Entry",
+      message:
+        "Are you sure you want to remove this entry from the contest? This action cannot be undone.",
+    });
+  };
+
+  const confirmRemoveEntry = () => {
+    const { contestId, entryId } = confirmDialog;
+    if (contestId && entryId) {
       removeEntryMutation.mutate({ contestId, entryId });
     }
   };
@@ -710,6 +730,18 @@ const ContestDetail = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmRemoveEntry}
+        title={confirmDialog.title || "Remove Entry"}
+        message={
+          confirmDialog.message || "Are you sure you want to remove this entry?"
+        }
+        type="warning"
+        confirmText="Remove"
+        cancelText="Cancel"
+      />
     </motion.div>
   );
 };

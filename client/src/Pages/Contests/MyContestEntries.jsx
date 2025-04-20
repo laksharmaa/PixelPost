@@ -1,5 +1,5 @@
 // Pages/Contests/MyContestEntries.jsx
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -12,9 +12,15 @@ import {
   FaClock,
 } from "react-icons/fa";
 import Loader from "../../components/Loader";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const MyContestEntries = () => {
   const navigate = useNavigate();
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    entryId: null,
+    contestId: null,
+  });
   const { getAccessTokenSilently } = useAuth0();
   const queryClient = useQueryClient();
 
@@ -69,7 +75,19 @@ const MyContestEntries = () => {
   });
 
   const handleRemoveEntry = (contestId, entryId) => {
-    if (confirm("Are you sure you want to remove this entry?")) {
+    setConfirmDialog({
+      isOpen: true,
+      entryId,
+      contestId,
+      title: "Remove Entry",
+      message:
+        "Are you sure you want to remove this entry from the contest? This action cannot be undone.",
+    });
+  };
+
+  const confirmRemoveEntry = () => {
+    const { contestId, entryId } = confirmDialog;
+    if (contestId && entryId) {
       removeEntryMutation.mutate({ contestId, entryId });
     }
   };
@@ -275,6 +293,19 @@ const MyContestEntries = () => {
           Error removing entry: {removeEntryMutation.error.message}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmRemoveEntry}
+        title={confirmDialog.title || "Remove Entry"}
+        message={
+          confirmDialog.message || "Are you sure you want to remove this entry?"
+        }
+        type="warning"
+        confirmText="Remove"
+        cancelText="Cancel"
+      />
     </motion.div>
   );
 };
