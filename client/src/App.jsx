@@ -61,7 +61,7 @@ function App() {
             <Route path="/contests" element={<Contests />} />
             <Route path="/contests/:id" element={<ContestDetail />} />
             <Route
-              path="/my-contest-entries"
+              path="/contests/myentries"
               element={
                 <PrivateRoute>
                   <MyContestEntries />

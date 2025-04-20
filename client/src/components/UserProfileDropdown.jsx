@@ -83,7 +83,7 @@ const UserProfileDropdown = ({
 
             <button
               onClick={() => {
-                navigate("/my-contest-entries");
+                navigate("/contests/myentries");
                 setIsDropdownOpen(false);
               }}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"

@@ -5,9 +5,13 @@ import { motion } from "framer-motion";
 import ContestCard from "../../components/ContestCard";
 import Loader from "../../components/Loader";
 import { FaTrophy, FaFilter } from "react-icons/fa";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useNavigate } from "react-router-dom";
 
 const Contests = () => {
   const [filter, setFilter] = useState("all"); // 'all', 'active', 'upcoming', 'completed'
+  const { isAuthenticated } = useAuth0();
+  const navigate = useNavigate();
 
   // Fetch all contests
   const { data, isLoading, error } = useQuery({
@@ -71,7 +75,18 @@ const Contests = () => {
             </p>
           </div>
 
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex flex-col md:flex-row gap-3">
+            {isAuthenticated && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate("/contests/myentries")}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-sm text-sm font-medium"
+              >
+                <FaTrophy className="inline mr-2" />
+                My Entries
+              </motion.button>
+            )}
             <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm p-2">
               <FaFilter className="text-gray-500 dark:text-gray-400 mr-2" />
               <select

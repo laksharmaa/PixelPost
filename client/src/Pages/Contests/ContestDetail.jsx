@@ -12,6 +12,7 @@ import {
   FaArrowLeft,
   FaVoteYea,
   FaUserAlt,
+  FaTrash,
 } from "react-icons/fa";
 import Loader from "../../components/Loader";
 
@@ -192,6 +193,38 @@ const ContestDetail = () => {
     }
 
     submitEntryMutation.mutate(selectedPost);
+  };
+
+  const removeEntryMutation = useMutation({
+    mutationFn: async ({ contestId, entryId }) => {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/contests/${contestId}/entries/${entryId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to remove entry");
+      }
+  
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["contest", id]);
+    },
+  });
+  
+  // Add this handler function inside the component
+  const handleRemoveEntry = (contestId, entryId) => {
+    if (confirm("Are you sure you want to remove this entry?")) {
+      removeEntryMutation.mutate({ contestId, entryId });
+    }
   };
 
   const handleVote = () => {
@@ -381,23 +414,44 @@ const ContestDetail = () => {
                             {entry.postId.prompt || "No prompt available"}
                           </p>
 
-                          {isContestActive &&
-                            isAuthenticated &&
-                            user?.sub !== entry.userId && (
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setSelectedEntry(entry)}
-                                className="w-full py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg text-sm font-medium"
-                              >
-                                <FaVoteYea className="inline mr-2" />
-                                {entry.voters.some(
-                                  (voter) => voter.userId === user?.sub
-                                )
-                                  ? "Update Vote"
-                                  : "Vote"}
-                              </motion.button>
-                            )}
+                          <div className="flex space-x-2">
+                            {/* Add the "Remove Entry" button - only show if it's the user's entry and contest is active/upcoming */}
+                            {isAuthenticated &&
+                              user?.sub === entry.userId &&
+                              (contest.status === "active" ||
+                                contest.status === "upcoming") && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() =>
+                                    handleRemoveEntry(contest._id, entry._id)
+                                  }
+                                  className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium"
+                                >
+                                  <FaTrash className="inline mr-2" />
+                                  Remove Entry
+                                </motion.button>
+                              )}
+
+                            {/* Vote button - only show if it's not the user's entry and contest is active */}
+                            {isContestActive &&
+                              isAuthenticated &&
+                              user?.sub !== entry.userId && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setSelectedEntry(entry)}
+                                  className="flex-1 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg text-sm font-medium"
+                                >
+                                  <FaVoteYea className="inline mr-2" />
+                                  {entry.voters.some(
+                                    (voter) => voter.userId === user?.sub
+                                  )
+                                    ? "Update Vote"
+                                    : "Vote"}
+                                </motion.button>
+                              )}
+                          </div>
                         </div>
                       </>
                     ) : (
