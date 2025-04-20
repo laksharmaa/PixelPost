@@ -369,7 +369,7 @@ router.delete("/:id/entries/:entryId", checkJwt, async (req, res) => {
     }
 
     // Remove the entry
-    entry.remove();
+    contest.entries.pull({ _id: entryId });
     await contest.save();
 
     res.status(200).json({

@@ -94,7 +94,7 @@ const UserProfileCard = ({ userInfo, auth0User }) => {
                     <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-transform hover:scale-105">
                       <div className="flex items-center gap-1">
                         <FaMoneyBillWave className="text-yellow-500 dark:text-yellow-400 text-lg sm:text-xl" />
-                        <span className="font-bold">{postCount || 0}</span>
+                        <span className="font-bold">{credits || 0}</span>
                       </div>
                       <span className="text-xs sm:text-sm">Credits</span>
                     </div>}
