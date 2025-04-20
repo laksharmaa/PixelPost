@@ -10,3 +10,6 @@ logs
 
 build/
 debug/
+test/
+
+.DS_Store

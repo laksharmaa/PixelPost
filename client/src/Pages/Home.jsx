@@ -58,6 +58,34 @@ const Home = () => {
   const { isAuthenticated, getAccessTokenSilently, user } = useAuth0();
   const queryClient = useQueryClient();
 
+
+  useEffect(() => {
+    const getUser = async () => {
+      const token = await getAccessTokenSilently();
+      if (!user) return;
+      await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user`,  // Ensure the URL is correctly formatted
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userId: user.sub,
+            name: user.name,
+            email: user.email,
+            profilePicture: user.picture,
+          }),
+        }
+      );
+    };
+
+    if (isAuthenticated) {
+      getUser();
+    }
+  }, [isAuthenticated]);
+
   // Fetch posts with infinite scroll
   const fetchPosts = async ({ pageParam = 1 }) => {
     const response = await fetch(

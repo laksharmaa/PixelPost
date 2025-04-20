@@ -209,6 +209,7 @@ const Profile = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.4 }}
+            className="h-80 md:h-60 align-center mb-10"
           >
             <UserProfileCard userInfo={userInfo} auth0User={user} />
           </motion.div>

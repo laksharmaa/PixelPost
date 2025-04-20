@@ -1,7 +1,7 @@
 import User from "../mongodb/models/user.js";
 import Post from '../mongodb/models/post.js';
 
-const loginOrCreateUser = async (userId, name, email) => {
+const loginOrCreateUser = async (userId, name, email, profilePicture) => {
   try {
     // Attempt to find the user in the database
     let user = await User.findOne({ userId });
@@ -15,21 +15,28 @@ const loginOrCreateUser = async (userId, name, email) => {
         userId,
         name: name || "Unknown User",
         email: email || "unknown@example.com",
+        picture: picture || "",
         postCount: actualPostCount
       });
       await user.save();
       console.log("New user created:", user);
     } else {
+      console.log("User found:", user);
       // If user exists, check and update fields if necessary
       let updated = false;
 
-      if (!user.name && name) {
+      if ((!user.name && name) || (user.name==="Unknown User" && name)) {
         user.name = name;
         updated = true;
       }
 
-      if (!user.email && email) {
+      if ((!user.email && email) || (user.email==="unknown@example.com" && email)) {
         user.email = email;
+        updated = true;
+      }
+
+      if (!user.profilePicture && profilePicture) {
+        user.profilePicture = profilePicture;
         updated = true;
       }
 
