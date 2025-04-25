@@ -7,6 +7,7 @@ import { Auth0Provider } from "@auth0/auth0-react"; // Import Auth0Provider
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; // Import React Query
 import { AdminProvider } from "./context/AdminContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Create a new instance of QueryClient
 const queryClient = new QueryClient();
@@ -27,7 +28,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <ThemeProvider>
           <BrowserRouter>
             <AdminProvider>
+              <NotificationProvider>
               <App />
+              </NotificationProvider>
             </AdminProvider>
           </BrowserRouter>
         </ThemeProvider>

@@ -6,7 +6,6 @@ import PrivateRoute from "./Pages/PrivateRoute";
 import CustomNavbar from "./components/CustomNavbar";
 import { useTheme } from "./context/ThemeContext";
 import { UserProvider } from "./context/UserContext";
-import NotificationsPlaceholder from "./Pages/NotificationsPlaceholder";
 import BookmarksPlaceholder from "./Pages/BookmarksPlaceholder";
 import NotFound from "./Pages/NotFound";
 import AdminLogin from "./Pages/Admin/AdminLogin";
@@ -19,6 +18,7 @@ import AdminRoute from "./Pages/Admin/AdminRoute";
 import Contests from "./Pages/Contests/Contests";
 import ContestDetail from "./Pages/Contests/ContestDetail";
 import MyContestEntries from "./Pages/Contests/MyContestEntries";
+import Notifications from './Pages/Notifications';
 
 function App() {
   const { isDarkMode } = useTheme();
@@ -52,7 +52,7 @@ function App() {
             />
             <Route
               path="/notifications"
-              element={<NotificationsPlaceholder />}
+              element={<Notifications />}
             />
             <Route path="/bookmarks" element={<BookmarksPlaceholder />} />
             <Route path="/post/:id" element={<PostDetail />} />

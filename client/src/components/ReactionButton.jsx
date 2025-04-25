@@ -55,52 +55,60 @@ const ReactionButton = ({ post, userId }) => {
     );
   };
 
-  const handleReact = async (reactionType) => {
+  // ReactionButton.jsx
+const handleReact = async (reactionType) => {
+  if (!isAuthenticated) {
+    loginWithRedirect(); // Redirect to login if not authenticated
+    return;
+  }
 
-    if (!isAuthenticated) {
-      loginWithRedirect(); // Redirect to login if not authenticated
-      return;
-    }
+  try {
+    const token = await getAccessTokenSilently();
+    const newReaction = userReaction === reactionType ? null : reactionType;
 
-    try {
-      const token = await getAccessTokenSilently();
-      const newReaction = userReaction === reactionType ? null : reactionType;
+    // Optimistically update UI
+    setUserReaction(newReaction);
+    setReactionCounts((prev) => {
+      const updatedCounts = { ...prev };
+      if (userReaction) updatedCounts[userReaction] = Math.max(0, (updatedCounts[userReaction] || 0) - 1);
+      if (newReaction) updatedCounts[newReaction] = (updatedCounts[newReaction] || 0) + 1;
+      return updatedCounts;
+    });
 
-      // Optimistically update UI
-      setUserReaction(newReaction);
-      setReactionCounts((prev) => {
-        const updatedCounts = { ...prev };
-        if (userReaction) updatedCounts[userReaction] = Math.max(0, (updatedCounts[userReaction] || 0) - 1);
-        if (newReaction) updatedCounts[newReaction] = (updatedCounts[newReaction] || 0) + 1;
-        return updatedCounts;
-      });
+    setTotalReactions((prev) => {
+      if (userReaction && !newReaction) return prev - 1;
+      if (!userReaction && newReaction) return prev + 1;
+      return prev;
+    });
 
-      setTotalReactions((prev) => {
-        if (userReaction && !newReaction) return prev - 1;
-        if (!userReaction && newReaction) return prev + 1;
-        return prev;
-      });
+    // Send only userId and reactionType - the backend will fetch username from user schema
+    const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${post._id}/react`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ 
+        userId, 
+        reactionType: newReaction
+      }),
+    });
 
-      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${post._id}/react`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ userId, reactionType: newReaction }),
-      });
+    if (!response.ok) throw new Error("Failed to update reaction");
 
-      if (!response.ok) throw new Error("Failed to update reaction");
+    const data = await response.json();
+    setReactionCounts(data.data.reactions);
+    setTotalReactions(data.data.totalReactions);
+    
+    // Find the user's reaction in the updated reactedBy array
+    // This may have changed from the optimistic update if another client updated it
+    const userReactionData = data.data.reactedBy.find(r => r.username === username);
+    setUserReaction(userReactionData?.reactionType || null);
 
-      const data = await response.json();
-      setReactionCounts(data.data.reactions);
-      setTotalReactions(data.data.totalReactions);
-      setUserReaction(data.data.reactedBy.find(r => r.username === userId)?.reactionType || null);
-
-    } catch (error) {
-      console.error("Error updating reaction:", error);
-    }
-  };
+  } catch (error) {
+    console.error("Error updating reaction:", error);
+  }
+};
 
   return (
     <div
