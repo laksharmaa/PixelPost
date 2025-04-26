@@ -64,7 +64,7 @@ const Home = () => {
       const token = await getAccessTokenSilently();
       if (!user) return;
       await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user`,  // Ensure the URL is correctly formatted
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${user.sub}`,  // Ensure the URL is correctly formatted
         {
           method: "POST",
           headers: {

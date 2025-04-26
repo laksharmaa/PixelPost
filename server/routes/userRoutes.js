@@ -74,15 +74,43 @@ import { createNotification } from '../services/notificationService.js';
 
 const router = express.Router();
 
+router.post("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const decodedUserId = decodeURIComponent(userId);
+    const user = await loginOrCreateUser(decodedUserId, req.body.name, req.body.email, req.body.profilePicture);
+
+    // Create a userInfo object with the required counts
+    const userInfo = {
+      followers: user.followers,
+      following: user.following,
+      postCount: user.postCount,
+      name: user.name,
+      email: user.email
+    };
+
+    res.status(200).json({
+      success: true,
+      data: userInfo
+    });
+  } catch (error) {
+    console.error("Error fetching user info:", error);
+    res.status(500).json({ success: false, message: "Error fetching user info" });
+  }
+});
+
 // Get user profile information
 router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const decodedUserId = decodeURIComponent(userId);
-    
-    const user = await loginOrCreateUser(decodedUserId, req.auth.name, req.auth.email);
+    let user = await User.findOne({ decodedUserId });
+
 
     // Create a userInfo object with the required counts
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
     const userInfo = {
       followers: user.followers,
       following: user.following,

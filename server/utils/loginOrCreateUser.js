@@ -15,7 +15,7 @@ const loginOrCreateUser = async (userId, name, email, profilePicture) => {
         userId,
         name: name || "Unknown User",
         email: email || "unknown@example.com",
-        picture: picture || "",
+        profilePicture: profilePicture || "",
         postCount: actualPostCount
       });
       await user.save();
