@@ -88,7 +88,7 @@ router.post("/:userId", async (req, res) => {
       postCount: user.postCount,
       name: user.name,
       email: user.email,
-      username: generateUsername()
+      username: user.username,
     };
 
     res.status(200).json({
