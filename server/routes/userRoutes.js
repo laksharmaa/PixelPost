@@ -70,6 +70,7 @@
 import express from "express";
 import User from "../mongodb/models/user.js";
 import loginOrCreateUser from "../utils/loginOrCreateUser.js";
+import generateUsername from "../utils/usernameGenerator.js";
 import { createNotification } from '../services/notificationService.js';
 
 const router = express.Router();
@@ -86,7 +87,8 @@ router.post("/:userId", async (req, res) => {
       following: user.following,
       postCount: user.postCount,
       name: user.name,
-      email: user.email
+      email: user.email,
+      username: generateUsername()
     };
 
     res.status(200).json({
