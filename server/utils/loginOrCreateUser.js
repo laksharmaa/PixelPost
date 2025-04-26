@@ -1,5 +1,6 @@
 import User from "../mongodb/models/user.js";
 import Post from '../mongodb/models/post.js';
+import generateUsername from "./usernameGenerator.js";
 
 const loginOrCreateUser = async (userId, name, email, profilePicture) => {
   try {
@@ -16,7 +17,8 @@ const loginOrCreateUser = async (userId, name, email, profilePicture) => {
         name: name || "Unknown User",
         email: email || "unknown@example.com",
         profilePicture: profilePicture || "",
-        postCount: actualPostCount
+        postCount: actualPostCount,
+        username: generateUsername() || "Unknown User",
       });
       await user.save();
       console.log("New user created:", user);
@@ -43,6 +45,11 @@ const loginOrCreateUser = async (userId, name, email, profilePicture) => {
       // Update post count if it's different
       if (user.postCount !== actualPostCount) {
         user.postCount = actualPostCount;
+        updated = true;
+      }
+      // Update username if it's not set
+      if (!user.username || user.username === "Unknown User") {
+        user.username = generateUsername();
         updated = true;
       }
 
