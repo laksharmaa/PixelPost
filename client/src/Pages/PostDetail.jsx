@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { BookmarkIcon as BookmarkOutline } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolid } from "@heroicons/react/24/solid";
 import ReactionButton from "../components/ReactionButton";
+import SimilarPosts from "../components/SimilarPosts";
 
 const fetchPost = async (id) => {
   const response = await fetch(
@@ -418,6 +419,7 @@ const PostDetail = () => {
         ) : (
           <p>No post found.</p>
         )}
+        {post && <SimilarPosts postId={id} />}
       </div>
     </motion.div>
   );
