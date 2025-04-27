@@ -28,7 +28,7 @@ const UserProfileCard = ({ userInfo, auth0User, getAccessTokenSilently }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ followerUserId: auth0User.sub, followerUsername: myProfile.username   }),
+          body: JSON.stringify({ followerUserId: auth0User.sub, followerUsername: myProfile.username }),
         });
 
       if (response.ok) {
@@ -140,7 +140,7 @@ const UserProfileCard = ({ userInfo, auth0User, getAccessTokenSilently }) => {
                     </div>
                     <span className="text-xs sm:text-sm">Posts</span>
                   </div>
-                  {auth0User.username === userInfo.username &&
+                  {myProfile.username === userInfo.username &&
                     <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400 transition-transform hover:scale-105">
                       <div className="flex items-center gap-1">
                         <FaMoneyBillWave className="text-yellow-500 dark:text-yellow-400 text-lg sm:text-xl" />
