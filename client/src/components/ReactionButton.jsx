@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
@@ -7,6 +7,7 @@ import loveAnimation from "../assets/lottie/love.json";
 import hahaAnimation from "../assets/lottie/haha.json";
 import wowAnimation from "../assets/lottie/wow.json";
 import fireAnimation from "../assets/lottie/fire.json";
+import { useUser } from "../context/UserContext";
 
 // Lottie-based reactions
 const reactions = {
@@ -40,12 +41,19 @@ const reactions = {
 const ReactionButton = ({ post, userId }) => {
   const { isAuthenticated, user, loginWithRedirect, getAccessTokenSilently } = useAuth0();
   const [hovering, setHovering] = useState(false);
-  const [userReaction, setUserReaction] = useState(() => {
-    const foundReaction = post.reactedBy.find((r) => r.username === userId);
-    return foundReaction ? foundReaction.reactionType : null;
-  });
+  const { user: currentUser, isLoading: userLoading } = useUser();
+  const [userReaction, setUserReaction] = useState(null);
   const [reactionCounts, setReactionCounts] = useState(post.reactions || {});
   const [totalReactions, setTotalReactions] = useState(post.totalReactions || 0);
+
+  // Update userReaction whenever currentUser or post.reactedBy changes
+  useEffect(() => {
+    if (currentUser && post.reactedBy) {
+      const username = currentUser.username;
+      const foundReaction = post.reactedBy.find(r => r.username === username);
+      setUserReaction(foundReaction ? foundReaction.reactionType : null);
+    }
+  }, [currentUser, post.reactedBy]);
 
   const getCurrentReactionIcon = () => {
     return userReaction ? (
@@ -55,60 +63,65 @@ const ReactionButton = ({ post, userId }) => {
     );
   };
 
-  // ReactionButton.jsx
-const handleReact = async (reactionType) => {
-  if (!isAuthenticated) {
-    loginWithRedirect(); // Redirect to login if not authenticated
-    return;
-  }
+  const handleReact = async (reactionType) => {
+    if (!isAuthenticated) {
+      loginWithRedirect(); // Redirect to login if not authenticated
+      return;
+    }
 
-  try {
-    const token = await getAccessTokenSilently();
-    const newReaction = userReaction === reactionType ? null : reactionType;
+    if (!currentUser) {
+      console.log("User data not yet available");
+      return;
+    }
 
-    // Optimistically update UI
-    setUserReaction(newReaction);
-    setReactionCounts((prev) => {
-      const updatedCounts = { ...prev };
-      if (userReaction) updatedCounts[userReaction] = Math.max(0, (updatedCounts[userReaction] || 0) - 1);
-      if (newReaction) updatedCounts[newReaction] = (updatedCounts[newReaction] || 0) + 1;
-      return updatedCounts;
-    });
+    try {
+      const token = await getAccessTokenSilently();
+      const newReaction = userReaction === reactionType ? null : reactionType;
 
-    setTotalReactions((prev) => {
-      if (userReaction && !newReaction) return prev - 1;
-      if (!userReaction && newReaction) return prev + 1;
-      return prev;
-    });
+      // Optimistically update UI
+      setUserReaction(newReaction);
+      setReactionCounts((prev) => {
+        const updatedCounts = { ...prev };
+        if (userReaction) updatedCounts[userReaction] = Math.max(0, (updatedCounts[userReaction] || 0) - 1);
+        if (newReaction) updatedCounts[newReaction] = (updatedCounts[newReaction] || 0) + 1;
+        return updatedCounts;
+      });
 
-    // Send only userId and reactionType - the backend will fetch username from user schema
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${post._id}/react`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ 
-        userId, 
-        reactionType: newReaction
-      }),
-    });
+      setTotalReactions((prev) => {
+        if (userReaction && !newReaction) return prev - 1;
+        if (!userReaction && newReaction) return prev + 1;
+        return prev;
+      });
 
-    if (!response.ok) throw new Error("Failed to update reaction");
+      // Send only userId and reactionType - the backend will fetch username from user schema
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/v1/post/${post._id}/react`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          userId, 
+          reactionType: newReaction
+        }),
+      });
 
-    const data = await response.json();
-    setReactionCounts(data.data.reactions);
-    setTotalReactions(data.data.totalReactions);
-    
-    // Find the user's reaction in the updated reactedBy array
-    // This may have changed from the optimistic update if another client updated it
-    const userReactionData = data.data.reactedBy.find(r => r.username === username);
-    setUserReaction(userReactionData?.reactionType || null);
+      if (!response.ok) throw new Error("Failed to update reaction");
 
-  } catch (error) {
-    console.error("Error updating reaction:", error);
-  }
-};
+      const data = await response.json();
+      setReactionCounts(data.data.reactions);
+      setTotalReactions(data.data.totalReactions);
+      
+      // Find the user's reaction in the updated reactedBy array
+      if (currentUser && currentUser.username) {
+        const userReactionData = data.data.reactedBy.find(r => r.username === currentUser.username);
+        setUserReaction(userReactionData?.reactionType || null);
+      }
+
+    } catch (error) {
+      console.error("Error updating reaction:", error);
+    }
+  };
 
   return (
     <div

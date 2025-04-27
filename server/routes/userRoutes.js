@@ -118,7 +118,10 @@ router.get("/:userId", async (req, res) => {
       following: user.following,
       postCount: user.postCount,
       name: user.name,
-      email: user.email
+      email: user.email,
+      username: user.username,
+      credits: user.credits,
+      profilePicture: user.profilePicture
     };
 
     res.status(200).json({
