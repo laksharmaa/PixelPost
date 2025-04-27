@@ -89,6 +89,9 @@ router.post("/:userId", async (req, res) => {
       name: user.name,
       email: user.email,
       username: user.username,
+      credits: user.credits,
+      profilePicture: user.profilePicture,
+      userId: user.userId,
     };
 
     res.status(200).json({
@@ -106,7 +109,7 @@ router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const decodedUserId = decodeURIComponent(userId);
-    let user = await User.findOne({ decodedUserId });
+    let user = await User.findOne({ userId: decodedUserId });
 
 
     // Create a userInfo object with the required counts
@@ -121,7 +124,8 @@ router.get("/:userId", async (req, res) => {
       email: user.email,
       username: user.username,
       credits: user.credits,
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
+      userId: user.userId,
     };
 
     res.status(200).json({

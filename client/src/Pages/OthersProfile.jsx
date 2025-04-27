@@ -8,10 +8,12 @@ import UserProfileCard from "../components/UserProfileCard"; // Import the new U
 import UserProfileCardSkeleton from "../components/UserProfileCardSkeleton"; // Import the skeleton loader
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
+
 
 const POSTS_PER_PAGE = 12;
 
-const Profile = () => {
+const OtherProfile = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const [userPosts, setUserPosts] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
@@ -22,7 +24,9 @@ const Profile = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const queryClient = useQueryClient();
-
+  const location = useLocation();
+  const passedUserId = location.state?.userId; // Retrieve userId from state
+  const userId = passedUserId || user?.sub; // Use passed userId or fallback to Auth0 userId
   // Add bookmark mutation
   const bookmarkMutation = useMutation({
     mutationFn: async ({ postId, isBookmarked }) => {
@@ -35,7 +39,7 @@ const Profile = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId: user?.sub }),
+        body: JSON.stringify({ userId: userId }),
       });
       if (!response.ok) throw new Error('Failed to toggle bookmark');
       return response.json();
@@ -61,10 +65,8 @@ const Profile = () => {
   const fetchUserInfo = async () => {
     try {
       const token = await getAccessTokenSilently();
-      const userId = encodeURIComponent(user.sub); // Ensure the userId is encoded
-
       const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${userId}`,  // Ensure the URL is correctly formatted
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${encodeURIComponent(userId)}`,
         {
           method: "GET",
           headers: {
@@ -92,7 +94,7 @@ const Profile = () => {
       const token = await getAccessTokenSilently();
       const response = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/post/user/${encodeURIComponent(
-          user.sub
+          userId
         )}?page=${pageNumber}&limit=${POSTS_PER_PAGE}`,
         {
           method: "GET",
@@ -232,7 +234,10 @@ const Profile = () => {
         className="text-center mb-10"
       >
         <p className="text-gray-500 text-lg">
-          Below are your created posts. You can manage them here.
+          <span className="text-gray-400 text-sm">
+            @{userInfo?.username } 
+          </span>
+          {` created these posts`}
         </p>
       </motion.div>
 
@@ -317,4 +322,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default OtherProfile;

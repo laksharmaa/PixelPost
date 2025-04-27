@@ -1,7 +1,7 @@
 // App.jsx
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import { Home, CreatePost, Profile, PostDetail } from "./Pages";
+import { Home, CreatePost, Profile, PostDetail, OtherProfile } from "./Pages";
 import PrivateRoute from "./Pages/PrivateRoute";
 import CustomNavbar from "./components/CustomNavbar";
 import { useTheme } from "./context/ThemeContext";
@@ -47,6 +47,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <Profile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/user/profile"
+              element={
+                <PrivateRoute>
+                  <OtherProfile />
                 </PrivateRoute>
               }
             />

@@ -546,7 +546,7 @@ function CustomNavbar() {
               userName={user?.name}
               userEmail={user?.email}
               avatarSrc={user?.picture}
-              onLogout={() => logout({ returnTo: window.location.origin })}
+              onLogout={() => {localStorage.removeItem("myProfile"); logout({ returnTo: window.location.origin })}}
               includeProfileOption
               isDarkMode={isDarkMode}
               isMobile={false}
@@ -672,7 +672,10 @@ function CustomNavbar() {
                       </button>
                       <button
                         onClick={() =>
-                          logout({ returnTo: window.location.origin })
+                          {
+                            localStorage.removeItem("myProfile");
+                            logout({ returnTo: window.location.origin });
+                          }
                         }
                         className="w-full text-left px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500"
                       >

@@ -63,7 +63,7 @@ const Home = () => {
     const getUser = async () => {
       const token = await getAccessTokenSilently();
       if (!user) return;
-      await fetch(
+      const dbUser = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/user/${user.sub}`,  // Ensure the URL is correctly formatted
         {
           method: "POST",
@@ -79,6 +79,12 @@ const Home = () => {
           }),
         }
       );
+      if (!dbUser.ok) {
+        console.error("Failed to fetch user data");
+        return;
+      }
+      const userData = await dbUser.json();
+      localStorage.setItem("myProfile", JSON.stringify(userData.data));
     };
 
     if (isAuthenticated) {

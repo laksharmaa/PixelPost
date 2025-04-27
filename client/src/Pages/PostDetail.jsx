@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { BookmarkIcon as BookmarkOutline } from "@heroicons/react/24/outline";
 import { BookmarkIcon as BookmarkSolid } from "@heroicons/react/24/solid";
 import ReactionButton from "../components/ReactionButton";
+import { useNavigate } from "react-router-dom";
 import SimilarPosts from "../components/SimilarPosts";
 
 const fetchPost = async (id) => {
@@ -27,6 +28,7 @@ const PostDetail = () => {
   const { isAuthenticated, getAccessTokenSilently, user, loginWithRedirect } =
     useAuth0();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Hooks for managing states
   const [newComment, setNewComment] = useState("");
@@ -289,9 +291,13 @@ const PostDetail = () => {
               {/* User Info */}
               <div className="flex items-center space-x-2 mb-4">
                 <AccountCircleSharpIcon className="w-8 h-8 bg-gray-300 rounded-full text-gray-800 dark:text-white" />
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <button
+                onClick={() => {
+                  navigate("/user/profile", { state: { userId: post.userId } }); // Pass userId via state
+                }}
+                 className="text-sm text-gray-600 dark:text-gray-400">
                   {post.username}
-                </p>
+                </button>
               </div>
 
               {/* Post Title */}
