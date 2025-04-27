@@ -8,6 +8,7 @@ import { FormField, Loader } from "../components";
 import GenerateButton from "../components/GenerateButton";
 import CreatePostStepper from "../components/CreatePostStepper";
 import PromptCarousel from "../components/PromptCarousel";
+import ErrorPopup from "../components/ErrorPopup";
 import { useUser } from "../context/UserContext";
 
 const CreatePost = () => {
@@ -16,11 +17,17 @@ const CreatePost = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { user: currentUser } = useUser();
 
+  const [error, setError] = useState({
+    isVisible: false,
+    message: "",
+    type: "error",
+  });
+
   const [form, setForm] = useState({
     name: "",
     prompt: "",
     photo: "",
-    tags: [] // Add tags to the form state
+    tags: [], // Add tags to the form state
   });
 
   const [generatingImg, setGeneratingImg] = useState(false);
@@ -39,6 +46,23 @@ const CreatePost = () => {
 
   const handlePromptSelect = (selectedPrompt) => {
     setForm({ ...form, prompt: selectedPrompt });
+  };
+
+  const showError = (message, type = "error") => {
+    setError({
+      isVisible: true,
+      message,
+      type,
+    });
+  };
+
+  // Close error popup
+  const closeError = () => {
+    setError({
+      isVisible: false,
+      message: "",
+      type: "error",
+    });
   };
 
   const generateImage = async () => {
@@ -61,31 +85,34 @@ const CreatePost = () => {
 
         if (response.ok) {
           const data = await response.json();
-          // Store both the image and the tags
           setForm({
             ...form,
             photo: `data:image/jpeg;base64,${data.photo.trim()}`,
-            tags: data.tags || [] // Save the tags from the API response
+            tags: data.tags || [],
           });
-          
-          // Log the tags for debugging
           console.log("Tags received:", data.tags);
         } else {
           const errorData = await response.json();
-          alert(`Error: ${errorData.message || "Failed to generate image"}`);
+          showError(errorData.message || "Failed to generate image");
         }
       } catch (error) {
-        alert(`Error generating image: ${error.message}`);
+        showError(`Error generating image: ${error.message}`);
       } finally {
         setGeneratingImg(false);
       }
     } else {
-      alert("Please enter a prompt");
+      showError("Please enter a prompt", "warning");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.name) {
+      showError("Please give your creation a title", "warning");
+      return;
+    }
+
     if (form.prompt && form.photo) {
       setLoading(true);
       try {
@@ -105,7 +132,7 @@ const CreatePost = () => {
               photo: form.photo,
               userId: user.sub,
               username: currentUser?.username || "anonymous",
-              tags: form.tags // Include the tags in the post creation request
+              tags: form.tags,
             }),
           }
         );
@@ -114,15 +141,15 @@ const CreatePost = () => {
           navigate("/");
         } else {
           const errorData = await response.json();
-          alert(`Error sharing post: ${errorData.message}`);
+          showError(`Error sharing post: ${errorData.message}`);
         }
       } catch (err) {
-        alert(`Error sharing post: ${err.message}`);
+        showError(`Error sharing post: ${err.message}`);
       } finally {
         setLoading(false);
       }
     } else {
-      alert("Please enter a prompt and generate an image");
+      showError("Please enter a prompt and generate an image", "warning");
     }
   };
 
@@ -139,8 +166,8 @@ const CreatePost = () => {
           <p className="text-sm font-medium mb-2">Generated Tags:</p>
           <div className="flex flex-wrap gap-2">
             {form.tags.map((tag, index) => (
-              <span 
-                key={index} 
+              <span
+                key={index}
                 className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs"
               >
                 {tag}
@@ -160,6 +187,12 @@ const CreatePost = () => {
       transition={{ duration: 0.5 }}
       className="max-w-7xl mx-auto bg-lightBg dark:bg-darkBg text-lightText dark:text-darkText min-h-screen p-8 rounded-xl"
     >
+      <ErrorPopup
+        isVisible={error.isVisible}
+        message={error.message}
+        type={error.type}
+        onClose={closeError}
+      />
       <CreatePostStepper currentStep={currentStep} />
 
       <motion.div
@@ -237,7 +270,7 @@ const CreatePost = () => {
               </motion.div>
             )}
           </motion.div>
-          
+
           {/* Display tags once generated */}
           {renderTags()}
         </motion.div>
