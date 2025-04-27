@@ -91,7 +91,7 @@ const SimilarPosts = ({ postId }) => {
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 mb-4"
             >
-              <Link to={`/post-detail/${post._id}`} className="block">
+              <Link to={`/post/${post._id}`} className="block">
                 <div className="relative aspect-w-16 aspect-h-9 overflow-hidden">
                   <img
                     src={post.photo}
