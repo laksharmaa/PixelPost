@@ -418,11 +418,19 @@ const router = express.Router();
 // In postRoutes.js - CREATE A POST route
 router.post('/', async (req, res) => {
   try {
-    const { name, prompt, photo, userId, email, username } = req.body;
+    const { name, prompt, photo, userId, email, username, tags } = req.body;
     
-    // Create the post
+    // Create the post with tags
     const photoUrl = await uploadImage(photo, `post-${Date.now()}.jpeg`);
-    const newPost = await Post.create({ name, prompt, photo: photoUrl, userId, username, likedBy: [] });
+    const newPost = await Post.create({ 
+      name, 
+      prompt, 
+      photo: photoUrl, 
+      userId, 
+      username, 
+      likedBy: [],
+      tags: tags || [] // Save tags if provided, otherwise empty array
+    });
 
     // Update user's post count
     await User.findOneAndUpdate(

@@ -14,6 +14,10 @@ const postSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    tags: {
+        type: [String],
+        default: []
+    },
     userId: {
         type: String, // Reference to the user who created the post
         required: true,

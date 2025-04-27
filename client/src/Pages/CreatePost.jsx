@@ -20,6 +20,7 @@ const CreatePost = () => {
     name: "",
     prompt: "",
     photo: "",
+    tags: [] // Add tags to the form state
   });
 
   const [generatingImg, setGeneratingImg] = useState(false);
@@ -60,10 +61,15 @@ const CreatePost = () => {
 
         if (response.ok) {
           const data = await response.json();
+          // Store both the image and the tags
           setForm({
             ...form,
             photo: `data:image/jpeg;base64,${data.photo.trim()}`,
+            tags: data.tags || [] // Save the tags from the API response
           });
+          
+          // Log the tags for debugging
+          console.log("Tags received:", data.tags);
         } else {
           const errorData = await response.json();
           alert(`Error: ${errorData.message || "Failed to generate image"}`);
@@ -94,9 +100,12 @@ const CreatePost = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              ...form,
+              name: form.name,
+              prompt: form.prompt,
+              photo: form.photo,
               userId: user.sub,
               username: currentUser?.username || "anonymous",
+              tags: form.tags // Include the tags in the post creation request
             }),
           }
         );
@@ -120,6 +129,28 @@ const CreatePost = () => {
   const handleSurpriseMe = () => {
     const randomPrompt = getRandomPrompt(form.prompt);
     setForm({ ...form, prompt: randomPrompt });
+  };
+
+  // Optional: Display tags for user to see/edit (if you want to add this feature)
+  const renderTags = () => {
+    if (form.tags && form.tags.length > 0) {
+      return (
+        <div className="mt-3">
+          <p className="text-sm font-medium mb-2">Generated Tags:</p>
+          <div className="flex flex-wrap gap-2">
+            {form.tags.map((tag, index) => (
+              <span 
+                key={index} 
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -206,6 +237,9 @@ const CreatePost = () => {
               </motion.div>
             )}
           </motion.div>
+          
+          {/* Display tags once generated */}
+          {renderTags()}
         </motion.div>
 
         <motion.div
