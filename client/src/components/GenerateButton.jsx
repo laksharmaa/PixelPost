@@ -1,15 +1,28 @@
 import React from 'react';
-// import './GenerateButton.css'; // Assuming you place the CSS in this file
+import { RiCoinLine } from 'react-icons/ri';
 
-const GenerateButton = ({ onClick, generating }) => {
+const GenerateButton = ({ onClick, generating, credits }) => {
+  const isDisabled = generating || credits === 0;
+  
   return (
     <button
-      className="group cursor-pointer relative cursor-default w-[120px] h-[60px] bg-[linear-gradient(144deg,_#af40ff,_#5b42f3_50%,_#00ddeb)] text-white whitespace-nowrap flex flex-wrap rounded-lg overflow-hidden"
+      className={`group relative w-[120px] h-[60px] bg-[linear-gradient(144deg,_#af40ff,_#5b42f3_50%,_#00ddeb)] text-white whitespace-nowrap flex flex-wrap rounded-lg overflow-hidden ${
+        isDisabled ? 'opacity-70' : ''
+      }`}
       onClick={onClick}
-      disabled={generating}
+      disabled={isDisabled}
     >
       <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-        {generating ? 'Generating...' : 'Generate'}
+        {generating ? 'Generating...' : (
+          <div className="flex items-center gap-1">
+            <span>Generate</span>
+            {credits !== undefined && (
+              <span className="flex items-center text-xs">
+                <RiCoinLine className="inline mr-[1px]" />1
+              </span>
+            )}
+          </div>
+        )}
       </span>
       {[...Array(64)].map((_, index) => (
         <div

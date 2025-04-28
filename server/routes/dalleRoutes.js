@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import User from '../mongodb/models/user.js'; // Import the User model
 
 dotenv.config();
 const router = express.Router();
@@ -26,6 +27,24 @@ router.get('/', (req, res) => {
 router.post('/', async (req, res) => {
   try {
     let { prompt } = req.body;
+    
+    // Get userId from Auth0 token
+    const userId = req.auth.sub;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'User authentication required' });
+    }
+    
+    // Check if user exists and has enough credits
+    const user = await User.findOne({ userId });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (user.credits < 1) {
+      return res.status(400).json({ message: 'Insufficient credits to generate an image. Each generation costs 1 credit.' });
+    }
     
     // Step 1: Enhance prompt using Gemini API
     const geminiResponse = await model.generateContent(prompt);
@@ -98,10 +117,17 @@ router.post('/', async (req, res) => {
       console.error('Error extracting tags:', error);
     }
 
-    // Return the image and tags
+    // Step 4: Deduct 1 credit from user account
+    user.credits -= 1;
+    user.imageGenerationCount += 1; // Increment image generation count
+    await user.save();
+    console.log(`Deducted 1 credit from user ${userId}. Remaining credits: ${user.credits}`);
+
+    // Return the image, tags, and updated credit information
     res.status(200).json({ 
       photo: base64Image,
-      tags: tags
+      tags: tags,
+      credits: user.credits
     });
   } catch (error) {
     console.error('Error processing request:', error);

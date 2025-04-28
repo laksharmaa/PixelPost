@@ -10,12 +10,13 @@ import CreatePostStepper from "../components/CreatePostStepper";
 import PromptCarousel from "../components/PromptCarousel";
 import ErrorPopup from "../components/ErrorPopup";
 import { useUser } from "../context/UserContext";
+import { RiCoinLine } from "react-icons/ri";
 
 const CreatePost = () => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const { user: currentUser } = useUser();
+  const { user: currentUser, fetchUserData } = useUser();
 
   const [error, setError] = useState({
     isVisible: false,
@@ -27,7 +28,7 @@ const CreatePost = () => {
     name: "",
     prompt: "",
     photo: "",
-    tags: [], // Add tags to the form state
+    tags: [],
   });
 
   const [generatingImg, setGeneratingImg] = useState(false);
@@ -66,42 +67,55 @@ const CreatePost = () => {
   };
 
   const generateImage = async () => {
-    if (form.prompt) {
-      try {
-        setGeneratingImg(true);
-        const token = await getAccessTokenSilently();
-
-        const response = await fetch(
-          `${import.meta.env.VITE_BASE_URL}/api/v1/dalle`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ prompt: form.prompt }),
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setForm({
-            ...form,
-            photo: `data:image/jpeg;base64,${data.photo.trim()}`,
-            tags: data.tags || [],
-          });
-          console.log("Tags received:", data.tags);
-        } else {
-          const errorData = await response.json();
-          showError(errorData.message || "Failed to generate image");
-        }
-      } catch (error) {
-        showError(`Error generating image: ${error.message}`);
-      } finally {
-        setGeneratingImg(false);
-      }
-    } else {
+    if (!form.prompt) {
       showError("Please enter a prompt", "warning");
+      return;
+    }
+    
+    // Check if user has enough credits
+    if (!currentUser || currentUser.credits < 1) {
+      showError("You don't have enough credits to generate an image. Each generation costs 1 credit.", "warning");
+      return;
+    }
+  
+    try {
+      setGeneratingImg(true);
+      const token = await getAccessTokenSilently();
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/dalle`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ prompt: form.prompt }),
+        }
+      );
+  
+      if (response.ok) {
+        const data = await response.json();
+        setForm({
+          ...form,
+          photo: `data:image/jpeg;base64,${data.photo.trim()}`,
+          tags: data.tags || [],
+        });
+        
+        // Update user credit count from API response
+        if (fetchUserData && typeof fetchUserData === 'function') {
+          await fetchUserData();
+        }
+        
+        console.log("Tags received:", data.tags);
+      } else {
+        const errorData = await response.json();
+        showError(errorData.message || "Failed to generate image");
+      }
+    } catch (error) {
+      showError(`Error generating image: ${error.message}`);
+    } finally {
+      setGeneratingImg(false);
     }
   };
 
@@ -205,6 +219,17 @@ const CreatePost = () => {
           Transform your ideas into stunning AI-generated artwork and share them
           with the community.
         </p>
+        
+        {/* Credits Display */}
+        <div className="mt-4 flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg">
+          <RiCoinLine className="text-yellow-500" size={20} />
+          <p className="text-sm font-medium">
+            Credits: <span className="font-bold">{currentUser?.credits || 0}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+              (1 credit per generation)
+            </span>
+          </p>
+        </div>
       </motion.div>
 
       <form className="mt-16 max-w-3xl" onSubmit={handleSubmit}>
@@ -271,15 +296,18 @@ const CreatePost = () => {
             )}
           </motion.div>
 
-          {/* Display tags once generated */}
           {renderTags()}
         </motion.div>
 
-        <motion.div
-          className="mt-5 flex gap-5"
-          // whileHover={{ scale: 1.02 }}
-        >
-          <GenerateButton onClick={generateImage} generating={generatingImg} />
+        <motion.div className="mt-5 flex items-center gap-3">
+          <GenerateButton 
+            onClick={generateImage} 
+            generating={generatingImg} 
+            credits={currentUser?.credits || 0}
+          />
+          {currentUser?.credits < 1 && 
+            <p className="text-red-500 text-sm">Not enough credits</p>
+          }
         </motion.div>
 
         <motion.div
@@ -296,6 +324,7 @@ const CreatePost = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="mt-3 text-white bg-[#6469ff] font-medium rounded-md text-sm w-full sm:w-auto px-5 py-2.5 text-center"
+            disabled={loading}
           >
             {loading ? "Sharing..." : "Share with the community"}
           </motion.button>
