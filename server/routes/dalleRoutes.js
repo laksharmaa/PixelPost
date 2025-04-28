@@ -3,7 +3,6 @@ import * as dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import fs from 'fs';
 
 dotenv.config();
 const router = express.Router();
@@ -33,11 +32,13 @@ router.post('/', async (req, res) => {
     const enhancedPrompt = geminiResponse.response.text();
     console.log("Enhanced Prompt:", enhancedPrompt);
 
-    // Step 2: Generate image using Stability AI's Stable Image Ultra API
+    // Step 2: Generate image using Stability AI's Stable Image Core API
+    // Create a FormData instance for multipart/form-data
     const formData = new FormData();
     formData.append('prompt', enhancedPrompt);
-    formData.append('aspect_ratio', '1:1'); // Default square aspect ratio
+    formData.append('aspect_ratio', '1:1');
     formData.append('output_format', 'jpeg');
+    formData.append('seed', '0'); // 0 means random seed
     
     // Optional parameters
     const negativePrompt = ''; // You can make this configurable
@@ -45,13 +46,12 @@ router.post('/', async (req, res) => {
       formData.append('negative_prompt', negativePrompt);
     }
     
-    formData.append('seed', '0'); // 0 means random seed
-    
     const response = await fetch(
-      "https://api.stability.ai/v2beta/stable-image/generate/ultra",
+      "https://api.stability.ai/v2beta/stable-image/generate/core",
       {
         method: "POST",
         headers: {
+          // Let FormData set the content-type with boundary automatically
           "Accept": "image/*",
           "Authorization": `Bearer ${process.env.STABILITY_API_KEY}`
         },
