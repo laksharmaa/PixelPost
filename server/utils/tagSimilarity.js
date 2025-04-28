@@ -55,7 +55,6 @@ const calculateTagSimilarity = (tags1, tags2) => {
       // Limit results
       .slice(0, limit);
     
-    console.log('Similar posts:', postsWithScores);
     return postsWithScores;
   };
   

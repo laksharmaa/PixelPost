@@ -12,21 +12,31 @@ const SimilarPosts = ({ postId }) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
 
   const fetchSimilarPosts = useCallback(async (currentPage = 1) => {
     if (!postId) return;
 
     try {
       setLoading(true);
-      const token = await getAccessTokenSilently();
+      
+      // Configure the request headers based on authentication status
+      const headers = {};
+      
+      // Only get token if user is authenticated
+      if (isAuthenticated) {
+        try {
+          const token = await getAccessTokenSilently();
+          headers.Authorization = `Bearer ${token}`;
+        } catch (err) {
+          console.log('Error getting token but continuing as unauthenticated user');
+        }
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_BASE_URL}/api/v1/post/${postId}/similar?page=${currentPage}&limit=6&threshold=0.01`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers
         }
       );
 
@@ -49,7 +59,7 @@ const SimilarPosts = ({ postId }) => {
     } finally {
       setLoading(false);
     }
-  }, [postId, getAccessTokenSilently]);
+  }, [postId, getAccessTokenSilently, isAuthenticated]);
 
   useEffect(() => {
     setPage(1);
