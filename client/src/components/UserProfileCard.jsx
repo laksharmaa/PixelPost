@@ -191,7 +191,7 @@ const UserProfileCard = ({ userInfo, auth0User, getAccessTokenSilently }) => {
                   <div className="flex flex-col items-center text-gray-900 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-transform hover:scale-105">
                     <div className="flex items-center gap-1">
                       <FaCrown className="text-red-500 dark:text-red-400 text-lg sm:text-xl" />
-                      <span className="font-bold">{userInfo.contest ?? 0}</span>
+                      <span className="font-bold">{userInfo.contestWon ?? 0}</span>
                     </div>
                     <span className="text-xs sm:text-sm">Contest Won</span>
                   </div>

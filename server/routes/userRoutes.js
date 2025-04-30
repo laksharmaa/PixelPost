@@ -126,6 +126,7 @@ router.get("/:userId", async (req, res) => {
       credits: user.credits,
       profilePicture: user.profilePicture,
       userId: user.userId,
+      contestWon: user.contestWon,
     };
 
     res.status(200).json({

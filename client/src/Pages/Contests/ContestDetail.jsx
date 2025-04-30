@@ -417,9 +417,27 @@ const ContestDetail = () => {
                           />
                         </div>
                         <div className="p-4">
-                          <div className="flex justify-between items-start mb-2">
+                          {/* Modified User Info Section with profile photo */}
+                          <div className="flex items-center mb-3">
+                            {/* User Avatar - Fetch from API or use default */}
+                            <img
+                              src={`https://ui-avatars.com/api/?name=${entry.username}&background=random`}
+                              alt={entry.username}
+                              className="w-8 h-8 rounded-full mr-3 object-cover"
+                            />
                             <div className="font-medium text-gray-900 dark:text-white">
                               {entry.username}
+                            </div>
+                          </div>
+
+                          {/* Post Title in Larger Font */}
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                            {entry.postId.name}
+                          </h3>
+
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(entry.submittedAt).toLocaleDateString()}
                             </div>
                             <div className="flex items-center">
                               <div className="text-yellow-500 font-bold mr-1">
@@ -430,12 +448,13 @@ const ContestDetail = () => {
                               </div>
                             </div>
                           </div>
+
                           <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-2 mb-3">
                             {entry.postId.prompt || "No prompt available"}
                           </p>
 
                           <div className="flex space-x-2">
-                            {/* Add the "Remove Entry" button - only show if it's the user's entry and contest is active/upcoming */}
+                            {/* Keep existing buttons */}
                             {isAuthenticated &&
                               user?.sub === entry.userId &&
                               (contest.status === "active" ||
@@ -530,7 +549,7 @@ const ContestDetail = () => {
                                   : ""
                               }
                               alt={`Winner #${winner.rank}`}
-                              className="w-full h-32 object-cover rounded-md"
+                              className="w-full h-full object-cover rounded-md"
                             />
                           </div>
                         )}

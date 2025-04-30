@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import Admin from '../mongodb/models/admin.js';
 import Contest from '../mongodb/models/contest.js';
 import { expressjwt } from 'express-jwt';
+import User from '../mongodb/models/user.js';
 
 dotenv.config();
 
@@ -20,7 +21,8 @@ const verifyAdminToken = expressjwt({
 router.post('/setup', async (req, res) => {
   try {
     // Check if admin already exists
-    const adminExists = await Admin.findOne();
+    const { username, password, name, email } = req.body;
+    const adminExists = await Admin.findOne({ username });
     if (adminExists) {
       return res.status(400).json({
         success: false,
@@ -28,7 +30,6 @@ router.post('/setup', async (req, res) => {
       });
     }
 
-    const { username, password, name, email } = req.body;
     
     // Create new admin
     const newAdmin = await Admin.create({
@@ -291,6 +292,32 @@ router.post('/contests/:id/calculate-winners', verifyAdminToken, async (req, res
     // Update contest with winners
     contest.winners = winners;
     await contest.save();
+    
+    // Award credits to winners and update stats
+    for (const winner of winners) {
+      const user = await User.findOne({ userId: winner.userId });
+      if (user) {
+        // Award credits based on rank
+        let creditsToAward = 0;
+        
+        if (winner.rank === 1) {
+          creditsToAward = 5;
+            if (user.contestWon) {
+            user.contestWon += 1; // Increment contestWon count if it exists
+            } else {
+            user.contestWon = 1; // Set contestWon to 1 if it doesn't exist
+            }
+        } else if (winner.rank === 2) {
+          creditsToAward = 3;
+        } else if (winner.rank === 3) {
+          creditsToAward = 2;
+        }
+        
+        // Update user credits
+        user.credits += creditsToAward;
+        await user.save();
+      }
+    }
     
     res.status(200).json({
       success: true,

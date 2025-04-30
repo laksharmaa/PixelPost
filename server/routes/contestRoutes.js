@@ -5,6 +5,7 @@ import Contest from "../mongodb/models/contest.js";
 import Post from "../mongodb/models/post.js";
 import { expressjwt } from "express-jwt";
 import jwks from "jwks-rsa";
+import User from "../mongodb/models/user.js";
 
 dotenv.config();
 
@@ -24,8 +25,37 @@ const checkJwt = expressjwt({
   requestProperty: "auth",
 });
 
+const updateContestStatus = async (req, res, next) => {
+  try {
+    const now = new Date();
+    
+    // Find contests that need status updates
+    const contestsToUpdate = await Contest.find({
+      $or: [
+        { status: "upcoming", startDate: { $lte: now } },
+        { status: "active", endDate: { $lte: now } },
+      ],
+    });
+
+    // Update statuses if needed
+    for (const contest of contestsToUpdate) {
+      if (contest.status === "upcoming" && now >= contest.startDate) {
+        contest.status = "active";
+      } else if (contest.status === "active" && now >= contest.endDate) {
+        contest.status = "completed";
+      }
+      await contest.save();
+    }
+    
+    next();
+  } catch (error) {
+    console.error("Error in status update middleware:", error);
+    next(); // Continue to the route handler even if there's an error
+  }
+};
+
 // Get all active and upcoming contests (public route)
-router.get("/", async (req, res) => {
+router.get("/", updateContestStatus, async (req, res) => {
   try {
     // Find contests that are active or upcoming
     const contests = await Contest.find({
@@ -53,7 +83,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get all contests including completed ones (public route)
-router.get("/all", async (req, res) => {
+router.get("/all", updateContestStatus, async (req, res) => {
   try {
     const contests = await Contest.find();
 
@@ -86,7 +116,7 @@ router.get("/all", async (req, res) => {
 });
 
 // Get a specific contest with entries (public route)
-router.get("/:id", async (req, res) => {
+router.get("/:id", updateContestStatus, async (req, res) => {
   try {
     const contest = await Contest.findById(req.params.id).populate({
       path: "entries.postId",
@@ -123,7 +153,12 @@ router.post("/:id/submit", checkJwt, async (req, res) => {
   try {
     const { postId } = req.body;
     const userId = req.auth.sub;
-    const username = req.auth.nickname || req.auth.name || userId;
+    
+    // Find the user to get the username from database instead of from JWT
+    const user = await User.findOne({ userId });
+    
+    // Use database username or fallback to user ID if for some reason user not found
+    const username = user ? user.username : userId;
 
     // Find the contest
     const contest = await Contest.findById(req.params.id);
@@ -292,7 +327,7 @@ router.post("/:id/vote", checkJwt, async (req, res) => {
 });
 
 // Get user's submitted entries (protected route)
-router.get("/user/entries", checkJwt, async (req, res) => {
+router.get("/user/entries", checkJwt, updateContestStatus, async (req, res) => {
   try {
     const userId = req.auth.sub;
 
