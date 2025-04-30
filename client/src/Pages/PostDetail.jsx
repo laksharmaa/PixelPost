@@ -292,10 +292,13 @@ const PostDetail = () => {
               <div className="flex items-center space-x-2 mb-4">
                 <AccountCircleSharpIcon className="w-8 h-8 bg-gray-300 rounded-full text-gray-800 dark:text-white" />
                 <button
-                onClick={() => {
-                  navigate("/user/profile", { state: { userId: post.userId } }); // Pass userId via state
-                }}
-                 className="text-sm text-gray-600 dark:text-gray-400">
+                  onClick={() => {
+                    navigate("/user/profile", {
+                      state: { userId: post.userId },
+                    }); // Pass userId via state
+                  }}
+                  className="text-sm text-gray-600 dark:text-gray-400"
+                >
                   {post.username}
                 </button>
               </div>
@@ -330,7 +333,7 @@ const PostDetail = () => {
                     className="flex justify-center items-center gap-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full p-1"
                   >
                     <ChatBubbleOutlineRoundedIcon />
-                    <span>{post.commentCount}</span>
+                    <span>{post.comments.length}</span>
                   </button>
                   <div className="flex justify-center items-center gap-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full p-1">
                     <RemoveRedEyeOutlinedIcon />
@@ -390,33 +393,88 @@ const PostDetail = () => {
                     </button>
                   </form>
 
-                  <div className="mt-4 h-64 overflow-y-auto">
-                    {showComments ? (
-                      post.comments && post.comments.length > 0 ? (
-                        <div className="mt-6 space-y-4">
-                          {post.comments.map((comment, index) => (
-                            <div key={index} className="border-b p-2">
-                              <div className="flex items-center mb-2">
-                                <AccountCircleSharpIcon className="w-8 h-8 bg-gray-300 rounded-full" />
-                                <p className="ml-3 font-semibold text-gray-800 dark:text-white">
-                                  User
+                  <div className="mt-4 h-64 overflow-y-auto custom-scrollbar">
+                    {showComments && (
+                      <div>
+                        {/* REMOVE THIS DIV that's causing the nested scrollbar */}
+                        {/* <div className="mt-4 h-64 overflow-y-auto"> */}
+                        <div className="mt-4 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                          <h3 className="text-lg font-semibold mb-4">
+                            Comments ({post.comments.length})
+                          </h3>
+
+                          {/* Comments List - keep this scrollable area */}
+                          <div className="space-y-4 max-h-96 pr-2">
+                            {post.comments && post.comments.length > 0 ? (
+                              post.comments.map((comment, index) => (
+                                <motion.div
+                                  key={index}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  className="p-4 rounded-lg shadow-sm bg-white dark:bg-gray-700 border-l-4 border-blue-500"
+                                >
+                                  {/* Comment content (unchanged) */}
+                                  <div className="flex items-start space-x-3">
+                                    <div className="flex-shrink-0">
+                                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-medium text-lg uppercase">
+                                        {comment.username
+                                          ? comment.username[0]
+                                          : "U"}
+                                      </div>
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                          {comment.username || "Anonymous"}
+                                        </span>
+                                      </div>
+                                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <p className="text-gray-700 dark:text-gray-300">
+                                          {comment.comment}
+                                        </p>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          {new Date(
+                                            comment.createdAt
+                                          ).toLocaleDateString(undefined, {
+                                            month: "short",
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))
+                            ) : (
+                              <div className="text-center py-8">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-12 w-12 mx-auto text-gray-400"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1}
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                                  />
+                                </svg>
+                                <p className="mt-2 text-gray-500 dark:text-gray-400">
+                                  No comments yet. Be the first to share your
+                                  thoughts!
                                 </p>
                               </div>
-                              <p className="text-gray-400 text-xs">
-                                {new Date(comment.createdAt).toLocaleString()}
-                              </p>
-                              <p className="text-gray-600 dark:text-gray-300">
-                                {comment.comment}
-                              </p>
-                            </div>
-                          ))}
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
-                          No comments
-                        </p>
-                      )
-                    ) : null}
+                        {/* </div> Remove this closing div */}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
