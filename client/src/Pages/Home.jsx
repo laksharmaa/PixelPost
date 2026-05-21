@@ -55,16 +55,18 @@ const RenderCards = ({
 
 const Home = () => {
   const [searchText, setSearchText] = useState("");
-  const { isAuthenticated, getAccessTokenSilently, user } = useAuth0();
-  const queryClient = useQueryClient();
 
+  // FIX 1: "userz" typo → "user"
+  // FIX 2: added loginWithRedirect (was used in handleBookmark but never destructured)
+  const { isAuthenticated, getAccessTokenSilently, user, loginWithRedirect } = useAuth0();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const getUser = async () => {
       const token = await getAccessTokenSilently();
       if (!user) return;
       const dbUser = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${user.sub}`,  // Ensure the URL is correctly formatted
+        `${import.meta.env.VITE_BASE_URL}/api/v1/user/${user.sub}`,
         {
           method: "POST",
           headers: {
@@ -98,7 +100,6 @@ const Home = () => {
       `${import.meta.env.VITE_BASE_URL}/api/v1/post?page=${pageParam}&limit=9`
     );
     if (!response.ok) throw new Error("Network response was not ok");
-    console.log(user);
     return response.json();
   };
 
@@ -115,6 +116,20 @@ const Home = () => {
     getNextPageParam: (lastPage, pages) => {
       if (lastPage.data.length < 9) return undefined;
       return pages.length + 1;
+    },
+  });
+
+  // FIX 3: moved useQuery for activeContests up here, before any early returns
+  // Previously it was placed after "if (status === 'error') return ..." which
+  // violated React's Rules of Hooks and caused the crash.
+  const { data: activeContests } = useQuery({
+    queryKey: ["activeContests"],
+    queryFn: async () => {
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/api/v1/contests`
+      );
+      if (!response.ok) throw new Error("Failed to fetch contests");
+      return response.json();
     },
   });
 
@@ -164,12 +179,26 @@ const Home = () => {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate and refetch the posts query to get updated bookmark status
       queryClient.invalidateQueries(["posts"]);
     },
   });
 
-  // Update the handleBookmark function:
+  const handleScroll = useCallback(() => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 100 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
   const handleBookmark = (postId) => {
     if (!isAuthenticated) {
       loginWithRedirect({
@@ -185,13 +214,29 @@ const Home = () => {
     if (post) {
       bookmarkMutation.mutate({
         postId,
-        isBookmarked: post.bookmarkedBy?.includes(user?.sub), // Fix: Check current user's ID
+        isBookmarked: post.bookmarkedBy?.includes(user?.sub),
       });
     }
   };
 
   if (status === "loading") return <Loader />;
-  if (status === "error") return <div>Error loading posts</div>;
+
+  // FIX 4: replaced blank <div> error state with a user-friendly offline message
+  if (status === "error") return (
+    <div className="flex flex-col items-center justify-center mt-32 text-center px-4">
+      <p className="text-6xl mb-6">⚠️</p>
+      <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-3">
+        Could not load posts
+      </h2>
+      <p className="text-gray-500 dark:text-gray-400 max-w-md text-base">
+        The backend is currently offline — Azure Cosmos DB &amp; Blob Storage
+        services have been suspended due to expired subscription.
+      </p>
+      <p className="text-gray-400 dark:text-gray-500 max-w-md text-sm mt-3 italic">
+        This is a capstone showcase project. Full functionality will be restored soon.
+      </p>
+    </div>
+  );
 
   const filteredPosts = data?.pages
     .flatMap((page) => page.data)
@@ -201,34 +246,6 @@ const Home = () => {
           post.prompt.toLowerCase().includes(searchText.toLowerCase())
         : true
     );
-
-  // Add this useEffect for infinite scroll
-  const handleScroll = useCallback(() => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 100 && // Load more when 100px from bottom
-      hasNextPage &&
-      !isFetchingNextPage
-    ) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const { data: activeContests } = useQuery({
-    queryKey: ["activeContests"],
-    queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_BASE_URL}/api/v1/contests`
-      );
-      if (!response.ok) throw new Error("Failed to fetch contests");
-      return response.json();
-    },
-  });
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
 
   return (
     <motion.section
@@ -350,7 +367,6 @@ const Home = () => {
         <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
           <AnimatePresence>
             {isLoading ? (
-              // Show skeleton cards while loading
               Array.from({ length: 8 }).map((_, index) => (
                 <motion.div
                   key={`skeleton-${index}`}

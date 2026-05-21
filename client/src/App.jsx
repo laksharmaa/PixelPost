@@ -19,6 +19,7 @@ import Contests from "./Pages/Contests/Contests";
 import ContestDetail from "./Pages/Contests/ContestDetail";
 import MyContestEntries from "./Pages/Contests/MyContestEntries";
 import Notifications from './Pages/Notifications';
+import ServiceOutageBanner from "./components/ServiceOutageBanner";
 
 function App() {
   const { isDarkMode } = useTheme();
@@ -30,6 +31,7 @@ function App() {
       } min-h-screen bg-gray-50 dark:bg-gray-900`}
     >
       <UserProvider>
+        <ServiceOutageBanner />
         <CustomNavbar />
         <div className="lg:ml-24 p-4">
           <Routes>
