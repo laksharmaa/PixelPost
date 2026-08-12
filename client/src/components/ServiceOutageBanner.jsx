@@ -15,11 +15,10 @@ const ServiceOutageBanner = () => {
         <div className="flex-1 text-sm text-amber-800 dark:text-amber-200">
           <span className="font-semibold">Service Notice: </span>
           This app's backend services (Azure) are
-          currently offline as the student cloud credits used for this
-          project have expired. Some features like loading posts, uploading
+          are temporarily unavailable. Some features like loading posts, uploading
           images, and user profiles may not work.{" "}
           <span className="italic opacity-75">
-             Built with React, Node.js, Auth0, Azure &amp; OpenAI. (Restoring services soon!)
+            (Restoring services soon!)
           </span>
         </div>
 
