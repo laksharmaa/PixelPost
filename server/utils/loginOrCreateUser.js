@@ -21,9 +21,7 @@ const loginOrCreateUser = async (userId, name, email, profilePicture) => {
         username: generateUsername() || "Unknown User",
       });
       await user.save();
-      console.log("New user created:", user);
     } else {
-      console.log("User found:", user);
       // If user exists, check and update fields if necessary
       let updated = false;
 
@@ -55,17 +53,14 @@ const loginOrCreateUser = async (userId, name, email, profilePicture) => {
 
       if (updated) {
         await user.save();
-        console.log("User updated:", user);
       }
     }
 
     return user;
   } catch (error) {
     if (error.code === 11000) {
-      console.log(`User ${userId} already exists, skipping creation`);
       return await User.findOne({ userId });
     } else {
-      console.error("Unexpected error in user login or creation:", error);
       throw error;
     }
   }

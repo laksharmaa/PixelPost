@@ -1,24 +1,21 @@
 import express from 'express';
-import * as dotenv from 'dotenv';
 import Post from '../mongodb/models/post.js';
 import Comment from '../mongodb/models/comment.js';
 import User from '../mongodb/models/user.js';
 import loginOrCreateUser from '../utils/loginOrCreateUser.js';
-import { uploadImage } from '../services/azureBlobService.js';
-import { deleteImage } from '../services/azureBlobService.js';
+import { uploadFile, deleteFile } from '../services/storageService.js';
 import { createNotification } from '../services/notificationService.js';
 import { findSimilarPosts } from '../utils/tagSimilarity.js'; 
 
-dotenv.config();
 const router = express.Router();
 
 // In postRoutes.js - CREATE A POST route
 router.post('/', async (req, res) => {
   try {
-    const { name, prompt, photo, userId, email, username, tags } = req.body;
+    const { name, prompt, photo, userId, username, tags } = req.body;
     
     // Create the post with tags
-    const photoUrl = await uploadImage(photo, `post-${Date.now()}.jpeg`);
+    const photoUrl = await uploadFile(photo, `post-${Date.now()}.jpeg`);
     const newPost = await Post.create({ 
       name, 
       prompt, 
@@ -38,7 +35,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ success: true, data: newPost });
   } catch (error) {
     console.error('Error creating post:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Error creating post' });
   }
 });
 
@@ -398,7 +395,7 @@ router.delete('/:id', async (req, res) => {
 
     // Delete the image from Azure Blob Storage
     try {
-      await deleteImage(photo);
+      await deleteFile(photo);
     } catch (blobError) {
       console.error("Failed to delete image from Azure Blob Storage:", blobError.message);
       // Continue with post deletion even if image deletion fails

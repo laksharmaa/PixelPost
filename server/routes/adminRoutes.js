@@ -1,13 +1,10 @@
 // routes/adminRoutes.js
 import express from 'express';
-import * as dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import Admin from '../mongodb/models/admin.js';
 import Contest from '../mongodb/models/contest.js';
 import { expressjwt } from 'express-jwt';
 import User from '../mongodb/models/user.js';
-
-dotenv.config();
 
 const router = express.Router();
 
@@ -46,7 +43,7 @@ router.post('/setup', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating admin:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -93,7 +90,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Error logging in:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -140,7 +137,7 @@ router.post('/contests', verifyAdminToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating contest:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -155,11 +152,11 @@ router.get('/contests', verifyAdminToken, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: contests,
+      data: sortedContests,
     });
   } catch (error) {
     console.error('Error fetching contests:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -184,7 +181,7 @@ router.get('/contests/:id', verifyAdminToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching contest:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -229,7 +226,7 @@ router.put('/contests/:id', verifyAdminToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating contest:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -251,7 +248,7 @@ router.delete('/contests/:id', verifyAdminToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting contest:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -325,7 +322,7 @@ router.post('/contests/:id/calculate-winners', verifyAdminToken, async (req, res
     });
   } catch (error) {
     console.error('Error calculating winners:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 

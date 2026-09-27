@@ -1,29 +1,11 @@
 // routes/contestRoutes.js
 import express from "express";
-import * as dotenv from "dotenv";
 import Contest from "../mongodb/models/contest.js";
 import Post from "../mongodb/models/post.js";
-import { expressjwt } from "express-jwt";
-import jwks from "jwks-rsa";
 import User from "../mongodb/models/user.js";
-
-dotenv.config();
+import checkJwt from "../middleware/auth.js";
 
 const router = express.Router();
-
-// Auth0 middleware for protected routes
-const checkJwt = expressjwt({
-  secret: jwks.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-  }),
-  audience: process.env.AUTH0_AUDIENCE,
-  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-  algorithms: ["RS256"],
-  requestProperty: "auth",
-});
 
 const updateContestStatus = async (req, res, next) => {
   try {
@@ -78,7 +60,7 @@ router.get("/", updateContestStatus, async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching contests:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -111,7 +93,7 @@ router.get("/all", updateContestStatus, async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching all contests:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -144,7 +126,7 @@ router.get("/:id", updateContestStatus, async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching contest:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -229,7 +211,7 @@ router.post("/:id/submit", checkJwt, async (req, res) => {
     });
   } catch (error) {
     console.error("Error submitting contest entry:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -322,7 +304,7 @@ router.post("/:id/vote", checkJwt, async (req, res) => {
     });
   } catch (error) {
     console.error("Error voting on contest entry:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -357,7 +339,7 @@ router.get("/user/entries", checkJwt, updateContestStatus, async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user entries:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -413,7 +395,7 @@ router.delete("/:id/entries/:entryId", checkJwt, async (req, res) => {
     });
   } catch (error) {
     console.error("Error removing contest entry:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -455,7 +437,7 @@ router.get("/:id/leaderboard", async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching contest leaderboard:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
@@ -500,7 +482,7 @@ router.post("/update-statuses", async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating contest statuses:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 

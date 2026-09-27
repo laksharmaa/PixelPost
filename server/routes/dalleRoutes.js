@@ -1,11 +1,7 @@
 import express from "express";
-import * as dotenv from "dotenv";
-import fetch from "node-fetch";
-import FormData from "form-data";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import User from "../mongodb/models/user.js"; // Import the User model
+import User from "../mongodb/models/user.js";
 
-dotenv.config();
 const router = express.Router();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -27,7 +23,7 @@ router.get("/", (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    let { prompt } = req.body;
+    const { prompt } = req.body;
 
     // Get userId from Auth0 token
     const userId = req.auth.sub;
@@ -55,8 +51,6 @@ router.post("/", async (req, res) => {
     // Step 1: Enhance prompt using Gemini API
     const geminiResponse = await model.generateContent(prompt);
     const enhancedPrompt = geminiResponse.response.text();
-    console.log("Enhanced Prompt:", enhancedPrompt);
-
     // Step 2: Generate image using Stability AI's Stable Image Core API
     // Create a FormData instance for multipart/form-data
     const formData = new FormData();
@@ -64,12 +58,6 @@ router.post("/", async (req, res) => {
     formData.append("aspect_ratio", "1:1");
     formData.append("output_format", "jpeg");
     formData.append("seed", "0"); // 0 means random seed
-
-    // Optional parameters
-    const negativePrompt = ""; // You can make this configurable
-    if (negativePrompt) {
-      formData.append("negative_prompt", negativePrompt);
-    }
 
     const response = await fetch(
       "https://api.stability.ai/v2beta/stable-image/generate/core",
@@ -96,10 +84,7 @@ router.post("/", async (req, res) => {
     }
 
     // Get the generated image and seed
-    const imageBuffer = await response.buffer();
-    const seed = response.headers.get("seed");
-    console.log(`Image Generated Successfully with seed: ${seed}`);
-
+    const imageBuffer = Buffer.from(await response.arrayBuffer());
     // Convert buffer to base64
     const base64Image = imageBuffer.toString("base64");
 
@@ -127,10 +112,7 @@ router.post("/", async (req, res) => {
         if (!Array.isArray(tags)) {
           throw new Error("Response is not an array");
         }
-      } catch (parseError) {
-        console.error("Error parsing tags:", parseError);
-        console.log("Raw response:", tagsText);
-
+      } catch {
         // If parsing fails, try to extract tags from response text
         const extractedTags = tagsText
           .match(/[\w\s]+/g)
@@ -138,31 +120,25 @@ router.post("/", async (req, res) => {
           ?.filter((t) => t.length > 0 && !t.includes("[") && !t.includes("]"));
         tags = extractedTags || [];
       }
-
-      console.log("Generated Tags:", tags);
     } catch (error) {
-      console.error("Error extracting tags:", error);
+      console.warn('Tag extraction failed:', error.name || 'Error');
     }
 
     // Step 4: Deduct 1 credit from user account
     user.credits -= 1;
     user.imageGenerationCount += 1; // Increment image generation count
     await user.save();
-    console.log(
-      `Deducted 1 credit from user ${userId}. Remaining credits: ${user.credits}`
-    );
-
     // Return the image, tags, and updated credit information
     res.status(200).json({
       photo: base64Image,
       tags: tags,
       credits: user.credits,
     });
-  } catch (error) {
-    console.error("Error processing request:", error);
+  } catch {
+    console.error('Image generation failed:', error.name || 'Error');
     res.status(500).json({
       message: "Failed to process request",
-      error: error.message,
+      error: 'Image generation is temporarily unavailable',
     });
   }
 });

@@ -10,15 +10,10 @@ router.get('/:userId', async (req, res) => {
     const { userId } = req.params;
     const { page = 1, limit = 20 } = req.query;
     
-    console.log(`Fetching notifications for userId: ${userId}`);
-    console.log(`Auth info:`, req.auth || 'No auth info available'); // Debug auth
-    
     const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip((page - 1) * parseInt(limit));
-    
-    console.log(`Found ${notifications.length} notifications`);
     
     const unreadCount = await Notification.countDocuments({ userId, isRead: false });
     const totalCount = await Notification.countDocuments({ userId });
