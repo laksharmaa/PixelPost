@@ -8,12 +8,12 @@ Reviewed the backend entry point, all route modules, services, utilities, Mongoo
 
 - `mongodb/models/userPost.js`: removed after reference verification. A repository-wide reference search found no import or model usage; the only matching source file was its own definition. The active post API uses `mongodb/models/post.js`.
 - `@azure/cosmos`: no SDK import or API use exists in application source. `connect.js` uses Mongoose, not the Cosmos SDK. This dependency can be removed independently of the database migration.
-- `cloudinary`: no source import or use found anywhere in the repository.
-- `openai`: no source import or use found in the backend. Image generation currently uses Gemini and Stability AI. The stale `OPENAI_API_KEY` value in local configuration is not consumed by backend code.
+- `cloudinary`: previously unused; it is now the active image-storage provider.
+- `openai`: no source import or use found in the backend. Image generation uses Stability AI. The stale `OPENAI_API_KEY` value in local configuration is not consumed by backend code.
 - `lodash.debounce`: no source import or use found anywhere in the repository.
 - `server` (`file:` self-dependency): no import or source reference found; it points the package at itself and serves no application purpose.
 
-The unused model and dependencies above were removed after this report was recorded. `@azure/storage-blob` is not removable yet: post creation and deletion call the storage implementation.
+The unused model and dependencies above were removed after this report was recorded. Cloudinary was later added as the selected storage SDK, and the Azure Blob SDK and adapter were removed; post creation and deletion now use the Cloudinary adapter through the storage service.
 
 ## SIMPLIFY
 
@@ -21,17 +21,18 @@ The unused model and dependencies above were removed after this report was recor
 - Environment loading is centralized at application startup; redundant route/provider dotenv setup was removed.
 - Fixed the admin contests endpoint to return its computed, creation-date-sorted result.
 - Removed the unused `email` destructure from post creation.
+- Removed Gemini prompt enhancement and image tag extraction. Stability AI receives the user's original prompt, and the image-generation response keeps `tags: []` for client compatibility. The `@google/generative-ai` dependency and Gemini key requirement were removed; delete obsolete Gemini keys from local environment configuration if present.
 - Similar-post search loads all posts and computes tag similarity in memory. This is functionally useful today, but its cost grows with collection size; optimize only with measured scale and preserved ordering/pagination behavior.
 - `nodemon` is now a development dependency; `start` runs Node directly and `dev` runs nodemon.
 - Replaced undeclared transitive `node-fetch` and `form-data` imports with native Node 18 `fetch` and `FormData`.
 
 ## REFACTOR
 
-- Storage provider coupling is now isolated: post routes call generic `uploadFile`/`deleteFile` operations through `services/storageService.js`; Azure SDK calls live in `storage/azureBlobStorage.js`. Existing image URLs and best-effort delete behavior are preserved.
+- Storage provider coupling is isolated: post routes call generic `uploadFile`/`deleteFile` operations through `services/storageService.js`; Cloudinary SDK calls live in `storage/cloudinaryStorage.js`. New uploads return Cloudinary secure URLs. Deletion preserves best-effort behavior and ignores legacy non-Cloudinary URLs.
 - Added a centralized Express error boundary for uncaught middleware errors and JWT validation, and sanitized caught admin, contest, post-creation, and image-generation error responses. Other route-local catches remain to preserve behavior; converting every Express 4 async handler should be a tested follow-up.
 - Auth0 verification now uses one shared middleware module for app and contest routes.
 - Fixed notification username fallback to import `User` directly, and removed a catch/log/rethrow wrapper with no error-handling value.
-- Database startup now accepts `MONGODB_URI` with `COSMOSDB_URL` as a compatibility fallback, awaits the connection before listening, uses a configurable port, and avoids logging connection details.
+- Database startup uses `MONGODB_URI`, awaits the connection before listening, uses a configurable port, and avoids logging connection details.
 - Declared `jsonwebtoken` directly because `adminRoutes.js` imports it.
 - Admin and contest error responses retain their status and JSON shape but use generic messages instead of exposing provider/database details. Image-generation errors retain their response keys with a generic error value.
 
@@ -44,21 +45,21 @@ The unused model and dependencies above were removed after this report was recor
 
 ## MIGRATION-READY
 
-- Mongoose is already the database access layer, so application models and routes do not call a provider-specific database SDK. The app accepts a generic MongoDB URI; the Cosmos-named environment variable is only a compatibility fallback.
+- Mongoose is already the database access layer, so application models and routes do not call a provider-specific database SDK. The app accepts a generic `MONGODB_URI`.
 - Auth0 JWT verification is an external identity integration rather than an Azure dependency. It can stay if Auth0 remains the identity provider.
-- Image generation is already outside Azure: Gemini enhances prompts/tags and Stability AI generates images. These are still vendor integrations and credentials, but they are isolated to `dalleRoutes.js`.
+- Image generation is already outside Azure: Stability AI generates images. Its API key is isolated to server configuration and the generation route.
 - Socket.IO is provider-agnostic but requires a host that supports persistent connections and shared socket state if horizontally scaled. Confirm target hosting support before migration.
-- Azure Blob Storage is the primary remaining Azure SDK integration. Keep its dependency until a replacement provider is selected and the adapter is swapped.
+- Cloudinary is selected through `STORAGE_PROVIDER` and can be replaced behind the existing storage service without changing post routes. Cloudinary credentials are supplied through environment variables, not source code.
 
 ## Dependency Usage
 
 | Package | Usage status | Recommendation |
 | --- | --- | --- |
 | `@azure/cosmos` | Unused SDK; only Cosmos-specific URI/config naming remains | Remove |
-| `@azure/storage-blob` | Used only by current image storage provider | Keep until storage migration; isolate behind adapter |
-| `@google/generative-ai` | Used by prompt enhancement and tag extraction | Keep |
+| `@azure/storage-blob` | Removed after Cloudinary was selected; no remaining source imports | Remove |
+| `@google/generative-ai` | No remaining application imports after prompt enhancement and tag extraction were removed | Remove |
 | `bcryptjs` | Used by admin password hashing | Keep |
-| `cloudinary` | No source imports or references found | Remove |
+| `cloudinary` | Used by the selected image-storage adapter | Keep |
 | `cors` | Used by Express app | Keep |
 | `dotenv` | Used by app entry point; redundant route-level calls | Keep package; remove duplicate calls |
 | `express` | Used by app and all route modules | Keep |

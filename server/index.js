@@ -66,7 +66,7 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
-    await connectDB(process.env.MONGODB_URI || process.env.COSMOSDB_URL);
+    await connectDB(process.env.MONGODB_URI);
     const port = Number(process.env.PORT) || 8080;
     httpServer.listen(port, () => console.log(`Server is running on port ${port}`));
   } catch {

@@ -393,12 +393,11 @@ router.delete('/:id', async (req, res) => {
 
     const { userId, photo } = post; // Get userId and photo URL
 
-    // Delete the image from Azure Blob Storage
+    // Continue deleting the post even if storage cleanup fails.
     try {
       await deleteFile(photo);
-    } catch (blobError) {
-      console.error("Failed to delete image from Azure Blob Storage:", blobError.message);
-      // Continue with post deletion even if image deletion fails
+    } catch (storageError) {
+      console.error('Failed to delete stored image:', storageError.name || 'Error');
     }
 
     // Delete associated comments

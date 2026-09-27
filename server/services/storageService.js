@@ -1,10 +1,10 @@
-import * as azureBlobStorage from '../storage/azureBlobStorage.js';
+import * as cloudinaryStorage from '../storage/cloudinaryStorage.js';
 
 const providers = {
-  azure: azureBlobStorage
+  cloudinary: cloudinaryStorage
 };
 
-const providerName = process.env.STORAGE_PROVIDER || 'azure';
+const providerName = process.env.STORAGE_PROVIDER || 'cloudinary';
 const storageProvider = providers[providerName];
 
 if (!storageProvider) {

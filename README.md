@@ -2,16 +2,16 @@
 ![Thumbnail](https://github.com/user-attachments/assets/b63814ec-3055-4bd1-8464-336617d47be1)
 <img width="960" alt="image" src="https://github.com/user-attachments/assets/702ea664-d709-4f9b-9635-9068c3db45bc" />
 
-> PixelPost is a Community Platform where users can create, share, and explore AI-generated images. The application uses React for the client-side, Node.js and Express for the server-side, Azure CosmosDB for data storage, and Azure Blob Storage for image storage. Authentication and authorization are handled using Auth0.
+> PixelPost is a community platform where users can create, share, and explore AI-generated images. The application uses React, Node.js, Express, a MongoDB-compatible database, and Cloudinary for image storage. Authentication and authorization are handled using Auth0.
 
 ## Features
 
-> - AI-generated image creation using OpenAI's API👾
+> - AI-generated images from Stability AI👾
 > - User authentication with Auth0🔑
 > - Personalized user profiles👤
 > - Like and comment on posts👍🏻
 > - Dark mode support🌗
-> - Image storage and management with Azure Blob Storage📷
+> - Image storage and management with Cloudinary📷
 > - Community showcase for sharing and exploring images🖼
 > - Responsive UI for a seamless experience on all devices📲
 
@@ -23,17 +23,17 @@
 ### Server-Side
 **Node.js**: For server-side JavaScript
 **Express**: For building the API
-**CosmosDB**: For data storage
-**Azure Blob Storage**: For image storage
+**MongoDB-compatible database**: For data storage
+**Cloudinary**: For image storage
 **Auth0**: For authentication and authorization
 
 ## Setup
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm (v6 or higher)
-- Azure account (for Blob Storage)
+- Node.js (v18 or higher)
+- npm (v7 or higher)
+- Cloudinary account
 - Auth0 account
-- CosmosDB account
+- MongoDB-compatible database account
 
 ### Installation
 1. Clone the repository:
@@ -56,7 +56,6 @@ npm install
 ```
 VITE_AUTH0_DOMAIN=your-auth0-domain
 VITE_AUTH0_CLIENT_ID=your-auth0-client-id
-VITE_CLIENT_SECRET=your-auth0-client-secret
 VITE_AUTH0_AUDIENCE=your-auth0-audience
 VITE_BASE_URL=http://localhost:8080
 ```
@@ -65,11 +64,18 @@ VITE_BASE_URL=http://localhost:8080
 ```
 AUTH0_DOMAIN=your-auth0-domain
 AUTH0_AUDIENCE=your-auth0-audience
-AZURE_BLOB_CONNECTION_STRING=your-azure-blob-connection-string
-AZURE_CONTAINER_NAME=your-azure-container-name
-COSMOSDB_URL=your-cosmosdb-url
-OPENAI_API_KEY=your-openai-api-key
+ADMIN_JWT_SECRET=your-admin-jwt-secret
+MONGODB_URI=your-mongodb-compatible-connection-string
+PORT=8080
+CLIENT_URL=http://localhost:5173
+STORAGE_PROVIDER=cloudinary
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+STABILITY_API_KEY=your-stability-api-key
 ```
+
+`STORAGE_PROVIDER` defaults to `cloudinary`.
 
 ## Run the Application
 *Client*
@@ -114,12 +120,15 @@ pixelpost/
 │   ├── mongodb/
 │   │   ├── connect.js
 │   │   ├── models/
+│   ├── middleware/
 │   ├── package.json
 │   ├── routes/
 │   │   ├── dalleRoutes.js
 │   │   ├── postRoutes.js
 │   ├── services/
-│   │   ├── azureBlobService.js
+│   │   ├── storageService.js
+│   ├── storage/
+│   │   ├── cloudinaryStorage.js
 │   ├── utils/
 │   │   ├── loginOrCreateUser.js
 │   └── vercel.json
