@@ -68,7 +68,8 @@ ADMIN_JWT_SECRET=your-admin-jwt-secret
 MONGODB_URI=your-mongodb-compatible-connection-string
 PORT=8080
 CLIENT_URL=http://localhost:5173
-STORAGE_PROVIDER=cloudinary
+│   │   ├── notificationRoutes.js
+│   │   ├── postRouter.js
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
@@ -122,11 +123,22 @@ pixelpost/
 │   │   ├── models/
 │   ├── middleware/
 │   ├── package.json
+│   ├── controllers/
 │   ├── routes/
-│   │   ├── dalleRoutes.js
-│   │   ├── postRoutes.js
+│   │   ├── adminRouter.js
+│   │   ├── contestRouter.js
+│   │   ├── dalleRouter.js
+│   │   ├── notificationRoutes.js
+│   │   ├── postRouter.js
+│   │   ├── userRoutes.js
 │   ├── services/
+│   │   ├── adminService.js
+│   │   ├── contestService.js
+│   │   ├── imageGenerationService.js
+│   │   ├── notificationService.js
+│   │   ├── postService.js
 │   │   ├── storageService.js
+│   │   ├── userService.js
 │   ├── storage/
 │   │   ├── cloudinaryStorage.js
 │   ├── utils/

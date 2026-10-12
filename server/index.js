@@ -6,12 +6,12 @@ import { Server } from 'socket.io';
 import connectDB from './mongodb/connect.js';
 import checkJwt from './middleware/auth.js';
 import errorHandler from './middleware/errorHandler.js';
-import postRoutes from './routes/postRoutes.js';
-import dalleRoutes from './routes/dalleRoutes.js';
+import postRoutes from './routes/postRouter.js';
+import dalleRoutes from './routes/dalleRouter.js';
 import userRoutes from './routes/userRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import contestRoutes from './routes/contestRoutes.js';
+import adminRoutes from './routes/adminRouter.js';
+import contestRoutes from './routes/contestRouter.js';
 
 const app = express();
 const httpServer = createServer(app);

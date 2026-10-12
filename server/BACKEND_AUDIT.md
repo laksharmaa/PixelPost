@@ -28,6 +28,7 @@ The unused model and dependencies above were removed after this report was recor
 
 ## REFACTOR
 
+- Route modules now declare paths, middleware, and controller bindings. Controllers handle HTTP inputs/responses; grouped domain services own database/provider workflows for posts, contests, users, admins, notifications, and image generation.
 - Storage provider coupling is isolated: post routes call generic `uploadFile`/`deleteFile` operations through `services/storageService.js`; Cloudinary SDK calls live in `storage/cloudinaryStorage.js`. New uploads return Cloudinary secure URLs. Deletion preserves best-effort behavior and ignores legacy non-Cloudinary URLs.
 - Added a centralized Express error boundary for uncaught middleware errors and JWT validation, and sanitized caught admin, contest, post-creation, and image-generation error responses. Other route-local catches remain to preserve behavior; converting every Express 4 async handler should be a tested follow-up.
 - Auth0 verification now uses one shared middleware module for app and contest routes.
@@ -75,7 +76,7 @@ The unused model and dependencies above were removed after this report was recor
 | `form-data` | Direct import, but only transitively installed | Replace with native `FormData` (Node 18+) |
 | `jsonwebtoken` | Direct import, but only transitively installed via `express-jwt` | Declare as a direct dependency |
 
-No duplicate top-level libraries providing the same active functionality were identified. `package-lock.json` remains lockfile v2 and was regenerated with npm 11.18.0 after dependency cleanup and security updates. `npm audit fix` resolved the compatible-range advisories; the production audit then reported zero vulnerabilities.
+No duplicate top-level libraries providing the same active functionality were identified. `package-lock.json` remains lockfile v2 and was regenerated with npm 11.18.0 after dependency cleanup and security updates. The production audit reports zero vulnerabilities. The full audit currently reports three high advisories in the development-only `nodemon` dependency tree (`nodemon`, `braces`, and `chokidar`); npm's suggested fix is a major downgrade to nodemon 1.x, so it was not applied as part of this refactor.
 
 ## Security And Operational Findings
 
